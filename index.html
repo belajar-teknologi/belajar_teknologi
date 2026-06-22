@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Generator Password</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome untuk Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50/30 to-blue-100/50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+
+    <div class="w-full max-w-xl mb-6 text-center space-y-2">
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Sistem Generator Lisensi (index.html)
+        </h1>
+        <p class="text-xs md:text-sm text-slate-500 font-medium">
+            Halaman rahasia Admin untuk generate password & link otomatis langsung masuk kelas.
+        </p>
+    </div>
+
+    <!-- Container Utama Generator -->
+    <div class="w-full max-w-xl bg-white border border-blue-100 rounded-3xl overflow-hidden shadow-xl shadow-blue-100/40 p-6 md:p-8 space-y-6 relative">
+        
+        <!-- Header Menu & Fitur Reset -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-blue-50 pb-4">
+            <div class="space-y-1 text-center sm:text-left">
+                <span class="bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider inline-block">Panel Kontrol Admin</span>
+                <h2 class="text-lg font-extrabold text-slate-855">Generator Akses Kelas</h2>
+            </div>
+            <!-- Tombol Kustom Reset Counter -->
+            <button onclick="openResetModal()" class="text-xs bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-100 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm font-semibold">
+                <i class="fa-solid fa-trash-can text-[11px]"></i> Reset Counter
+            </button>
+        </div>
+
+        <!-- Pilihan Tipe Lisensi -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            
+            <!-- Tombol Password Trial (Masa aktif 1 Jam) -->
+            <button onclick="generatePassword('Trial', '1 Jam')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                <div class="flex justify-between items-start w-full">
+                    <span class="text-blue-500 text-lg"><i class="fa-solid fa-clock"></i></span>
+                    <span id="trial-counter-badge" class="hidden items-center gap-1 text-[10px] bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full text-blue-600 font-extrabold">
+                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                        <span id="trial-count-value">0</span>x
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition">Password Trial</h3>
+                    <p class="text-[10px] text-slate-400">Masa aktif selama 1 Jam</p>
+                </div>
+            </button>
+
+            <!-- Tombol Password Harian (Masa aktif 24 Jam) -->
+            <button onclick="generatePassword('Harian', '24 Jam')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                <div class="flex justify-between items-start w-full">
+                    <span class="text-indigo-500 text-lg"><i class="fa-solid fa-calendar-day"></i></span>
+                    <span id="harian-counter-badge" class="hidden items-center gap-1 text-[10px] bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-full text-indigo-600 font-extrabold">
+                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                        <span id="harian-count-value">0</span>x
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition">Password 1 Hari</h3>
+                    <p class="text-[10px] text-slate-400">Masa aktif selama 24 Jam</p>
+                </div>
+            </button>
+
+            <!-- Tombol Password Mingguan (Masa aktif 7 Hari) -->
+            <button onclick="generatePassword('Mingguan', '7 Hari')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                <div class="flex justify-between items-start w-full">
+                    <span class="text-cyan-500 text-lg"><i class="fa-solid fa-calendar-week"></i></span>
+                    <span id="mingguan-counter-badge" class="hidden items-center gap-1 text-[10px] bg-cyan-100 border border-cyan-200 px-2 py-0.5 rounded-full text-cyan-600 font-extrabold">
+                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                        <span id="mingguan-count-value">0</span>x
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-cyan-600 transition">Password 1 Minggu</h3>
+                    <p class="text-[10px] text-slate-400">Masa aktif selama 7 Hari</p>
+                </div>
+            </button>
+
+            <!-- Tombol Password Bulanan (Masa aktif 30 Hari) -->
+            <button onclick="generatePassword('Bulanan', '30 Hari')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                <div class="flex justify-between items-start w-full">
+                    <span class="text-rose-500 text-lg"><i class="fa-solid fa-calendar-days"></i></span>
+                    <span id="bulanan-counter-badge" class="hidden items-center gap-1 text-[10px] bg-rose-100 border border-rose-200 px-2 py-0.5 rounded-full text-rose-600 font-extrabold">
+                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                        <span id="bulanan-count-value">0</span>x
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-rose-600 transition">Password 1 Bulan</h3>
+                    <p class="text-[10px] text-slate-400">Masa aktif selama 30 Hari</p>
+                </div>
+            </button>
+
+            <!-- Tombol Password Full (Lifetime) -->
+            <button onclick="generatePassword('Full Lifetime', 'Selamanya')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm md:col-span-2">
+                <div class="flex justify-between items-start w-full">
+                    <span class="text-purple-500 text-lg"><i class="fa-solid fa-infinity"></i></span>
+                    <span id="full-counter-badge" class="hidden items-center gap-1 text-[10px] bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-full text-purple-600 font-extrabold">
+                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                        <span id="full-count-value">0</span>x
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-purple-600 transition">Password Full</h3>
+                    <p class="text-[10px] text-slate-400">Akses Selamanya (Lifetime)</p>
+                </div>
+            </button>
+        </div>
+
+        <!-- Box Tampilan Hasil Password & Direct Link -->
+        <div id="result-box" class="hidden animate-fade-in bg-blue-50/50 border border-blue-100 rounded-2xl p-4 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Hasil Generate Berhasil</p>
+                    <p class="text-xs text-blue-600 font-medium" id="result-desc"></p>
+                </div>
+                <span class="text-[10px] font-mono bg-blue-100 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md font-semibold animate-pulse" id="license-badge">TRIAL</span>
+            </div>
+
+            <!-- Bagian Kode & Link Tersembunyi -->
+            <div class="space-y-3">
+                <!-- Kode Sandi (Masked) -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kode Akses Kelas (Tersembunyi)</label>
+                    <div class="relative flex items-center bg-white border border-blue-100 rounded-xl px-4 py-2.5 shadow-sm">
+                        <span id="masked-password-placeholder" class="text-sm font-mono font-bold tracking-widest text-slate-300">••••••</span>
+                        <input type="text" id="actual-password-hidden" class="hidden">
+                        <div class="absolute right-2 flex items-center gap-1">
+                            <button onclick="togglePasswordVisibility()" class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors" title="Lihat Password">
+                                <i id="toggle-eye-icon" class="fa-solid fa-eye-slash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Link Direct yang akan di-copy -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preview Link Masuk Otomatis</label>
+                    <div class="bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm text-[10px] font-mono text-blue-600 truncate" id="link-preview-text">
+                        Membuat link...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Salin Sekaligus (Kode & Link) -->
+            <button onclick="copyCodeAndLink()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15">
+                <i id="copy-btn-icon" class="fa-solid fa-copy"></i>
+                <span id="copy-btn-text">Salin Kode & Link Akses Sekaligus</span>
+            </button>
+
+            <!-- Tautan Fisik Langsung Menuju target file -->
+            <div class="pt-2 border-t border-blue-100/60 text-center">
+                <a id="direct-dashboard-anchor" href="dashboard_trial.html" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold tracking-wide flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/10">
+                    <span>Coba Buka Portal Kelas</span>
+                    <i class="fa-solid fa-arrow-right-long"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal Confirm Reset -->
+    <div id="reset-confirm-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white border border-blue-100 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto text-lg border border-rose-100">
+                    <i class="fa-solid fa-circle-question"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base">Konfirmasi Reset Counter</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">Apakah Anda yakin ingin mengatur ulang semua statistik klik pembuatan password kembali ke awal?</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                <button onclick="closeResetModal()" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-600 py-3 rounded-xl transition-all border border-slate-200">
+                    Batal
+                </button>
+                <button onclick="executeResetAllCounters()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl transition-all shadow-md shadow-rose-500/10">
+                    Ya, Reset Semua
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 bg-blue-600 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 transition-all z-50">
+        <i class="fa-solid fa-circle-check text-sm"></i>
+        <span id="toast-text">Berhasil disalin!</span>
+    </div>
+
+    <script>
+        const LOCAL_KEY_PASS = 'app_saved_license_password';
+        const LOCAL_KEY_TYPE = 'app_saved_license_type';
+        const LOCAL_KEY_EXPIRY = 'app_saved_license_expiry';
+        const LOCAL_KEY_LOGGED = 'app_user_is_logged_in';
+        
+        const COUNTER_KEYS = {
+            'Trial': 'app_trial_regeneration_count',
+            'Harian': 'app_harian_regeneration_count',
+            'Mingguan': 'app_mingguan_regeneration_count',
+            'Bulanan': 'app_bulanan_regeneration_count',
+            'Full Lifetime': 'app_full_regeneration_count'
+        };
+
+        const LOCAL_KEY_TRIAL_EXPIRY_TS = 'app_saved_trial_expiry_timestamp';
+        let isPasswordVisible = false;
+        let generatedLinkGlobal = "";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initAllCounters();
+        });
+
+        function initAllCounters() {
+            Object.keys(COUNTER_KEYS).forEach(type => {
+                const storageKey = COUNTER_KEYS[type];
+                const countValue = parseInt(localStorage.getItem(storageKey)) || 0;
+                
+                if (countValue > 0) {
+                    updateCounterUI(type, countValue);
+                } else {
+                    hideCounterUI(type);
+                }
+            });
+        }
+
+        function updateCounterUI(type, count) {
+            let badgeEl, valueEl;
+
+            if (type === 'Trial') {
+                badgeEl = document.getElementById('trial-counter-badge');
+                valueEl = document.getElementById('trial-count-value');
+            } else if (type === 'Harian') {
+                badgeEl = document.getElementById('harian-counter-badge');
+                valueEl = document.getElementById('harian-count-value');
+            } else if (type === 'Mingguan') {
+                badgeEl = document.getElementById('mingguan-counter-badge');
+                valueEl = document.getElementById('mingguan-count-value');
+            } else if (type === 'Bulanan') {
+                badgeEl = document.getElementById('bulanan-counter-badge');
+                valueEl = document.getElementById('bulanan-count-value');
+            } else if (type === 'Full Lifetime') {
+                badgeEl = document.getElementById('full-counter-badge');
+                valueEl = document.getElementById('full-count-value');
+            }
+
+            if (badgeEl && valueEl) {
+                valueEl.innerText = count;
+                badgeEl.classList.remove('hidden');
+                badgeEl.classList.add('inline-flex');
+            }
+        }
+
+        function hideCounterUI(type) {
+            let badgeEl;
+            if (type === 'Trial') badgeEl = document.getElementById('trial-counter-badge');
+            else if (type === 'Harian') badgeEl = document.getElementById('harian-counter-badge');
+            else if (type === 'Mingguan') badgeEl = document.getElementById('mingguan-counter-badge');
+            else if (type === 'Bulanan') badgeEl = document.getElementById('bulanan-counter-badge');
+            else if (type === 'Full Lifetime') badgeEl = document.getElementById('full-counter-badge');
+
+            if (badgeEl) {
+                badgeEl.classList.add('hidden');
+                badgeEl.classList.remove('inline-flex');
+            }
+        }
+
+        function openResetModal() {
+            document.getElementById('reset-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-confirm-modal').classList.add('hidden');
+        }
+
+        function executeResetAllCounters() {
+            Object.values(COUNTER_KEYS).forEach(storageKey => {
+                localStorage.removeItem(storageKey);
+            });
+            initAllCounters();
+            closeResetModal();
+            showToast("Semua statistik counter di-reset ke 0!");
+        }
+
+        function generatePassword(licenseType, expiry) {
+            let generatedPass = '';
+
+            const storageKey = COUNTER_KEYS[licenseType];
+            let currentCount = parseInt(localStorage.getItem(storageKey)) || 0;
+            currentCount++;
+            localStorage.setItem(storageKey, currentCount);
+            
+            updateCounterUI(licenseType, currentCount);
+
+            if (licenseType === 'Full Lifetime') {
+                generatedPass = 'belajar_teknologi';
+            } else {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (let i = 0; i < 6; i++) {
+                    generatedPass += letters.charAt(Math.floor(Math.random() * letters.length));
+                }
+            }
+
+            localStorage.setItem(LOCAL_KEY_PASS, generatedPass);
+            localStorage.setItem(LOCAL_KEY_TYPE, licenseType);
+            localStorage.setItem(LOCAL_KEY_EXPIRY, expiry);
+            localStorage.setItem(LOCAL_KEY_LOGGED, 'false'); 
+
+            // Tentukan nama file target dashboard yang sesuai
+            let targetFile = 'dashboard_trial.html';
+            if (licenseType === 'Harian') targetFile = 'dashboard_1_hari.html';
+            else if (licenseType === 'Mingguan') targetFile = 'dashboard_1_minggu.html';
+            else if (licenseType === 'Bulanan') targetFile = 'dashboard_1_bulan.html';
+            else if (licenseType === 'Full Lifetime') targetFile = 'dashboard_full.html';
+
+            // Dapatkan URL dasar folder saat ini
+            const currentUrl = window.location.href;
+            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+            const rawLink = `${baseUrl}/${targetFile}?pass=${generatedPass}&type=${encodeURIComponent(licenseType)}&expiry=${encodeURIComponent(expiry)}`;
+            generatedLinkGlobal = rawLink;
+
+            document.getElementById('actual-password-hidden').value = generatedPass;
+            document.getElementById('link-preview-text').innerText = rawLink;
+            document.getElementById('direct-dashboard-anchor').href = `${targetFile}?pass=${generatedPass}&type=${encodeURIComponent(licenseType)}&expiry=${encodeURIComponent(expiry)}`;
+
+            isPasswordVisible = false;
+            const maskPlaceholder = document.getElementById('masked-password-placeholder');
+            maskPlaceholder.innerText = "••••••";
+            maskPlaceholder.className = "text-sm font-mono font-bold tracking-widest text-slate-300";
+            document.getElementById('toggle-eye-icon').className = 'fa-solid fa-eye-slash text-xs';
+
+            const badge = document.getElementById('license-badge');
+            badge.innerText = licenseType.toUpperCase();
+
+            if (licenseType === 'Trial') badge.className = "text-[10px] font-mono bg-blue-100 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md font-semibold";
+            else if (licenseType === 'Harian') badge.className = "text-[10px] font-mono bg-indigo-100 text-indigo-600 border border-indigo-200 px-2 py-0.5 rounded-md font-semibold";
+            else if (licenseType === 'Mingguan') badge.className = "text-[10px] font-mono bg-cyan-100 text-cyan-600 border border-cyan-200 px-2 py-0.5 rounded-md font-semibold";
+            else if (licenseType === 'Bulanan') badge.className = "text-[10px] font-mono bg-rose-100 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-md font-semibold";
+            else badge.className = "text-[10px] font-mono bg-purple-100 text-purple-600 border border-purple-200 px-2 py-0.5 rounded-md font-semibold";
+
+            document.getElementById('result-desc').innerText = `Masa Aktif: ${expiry}`;
+            document.getElementById('result-box').classList.remove('hidden');
+
+            showToast("Kode & Link Berhasil Dibuat!");
+        }
+
+        function togglePasswordVisibility() {
+            const actualPass = document.getElementById('actual-password-hidden').value;
+            const maskPlaceholder = document.getElementById('masked-password-placeholder');
+            const eyeIcon = document.getElementById('toggle-eye-icon');
+
+            if (isPasswordVisible) {
+                maskPlaceholder.innerText = "••••••";
+                maskPlaceholder.className = "text-sm font-mono font-bold tracking-widest text-slate-300";
+                eyeIcon.className = 'fa-solid fa-eye-slash text-xs';
+                isPasswordVisible = false;
+            } else {
+                maskPlaceholder.innerText = actualPass;
+                maskPlaceholder.className = "text-sm font-mono font-bold tracking-widest text-blue-600";
+                eyeIcon.className = 'fa-solid fa-eye text-xs';
+                isPasswordVisible = true;
+            }
+        }
+
+        function copyCodeAndLink() {
+            const actualPass = document.getElementById('actual-password-hidden').value;
+            if (!actualPass || !generatedLinkGlobal) return;
+
+            const formattedText = `🔑 KODE AKSES KELAS: ${actualPass}\n🔗 LINK MASUK OTOMATIS: ${generatedLinkGlobal}`;
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = formattedText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const copyIcon = document.getElementById('copy-btn-icon');
+            const copyText = document.getElementById('copy-btn-text');
+            
+            copyIcon.className = "fa-solid fa-check text-green-300";
+            copyText.innerText = "Berhasil Disalin ke Clipboard!";
+
+            showToast("Kode & Link Akses disalin!");
+            
+            setTimeout(() => {
+                copyIcon.className = "fa-solid fa-copy";
+                copyText.innerText = "Salin Kode & Link Akses Sekaligus";
+            }, 2500);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
