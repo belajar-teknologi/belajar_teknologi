@@ -9,7 +9,7 @@
     <!-- FontAwesome untuk Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
@@ -17,156 +17,200 @@
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-indigo-50/30 to-blue-100/50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
 
-    <div class="w-full max-w-xl mb-6 text-center space-y-2">
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Sistem Generator Lisensi (index.html)
-        </h1>
-        <p class="text-xs md:text-sm text-slate-500 font-medium">
-            Halaman rahasia Admin untuk generate password & link otomatis langsung masuk kelas.
-        </p>
+    <!-- OVERLAY GERBANG KEAMANAN ADMIN LOKAL -->
+    <div id="admin-gate-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50 transition-all duration-300">
+        <div class="w-full max-w-sm bg-white border border-blue-100 rounded-3xl p-6 shadow-2xl space-y-5 text-center">
+            <div class="w-14 h-14 bg-blue-50 text-blue-600 border border-blue-100 rounded-2xl flex items-center justify-center mx-auto text-xl shadow-md">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div class="space-y-1.5">
+                <h3 class="font-extrabold text-slate-800 text-lg">Otentikasi Administrator</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">Halaman ini dilindungi. Masukkan kata sandi admin lokal Anda untuk mengakses generator lisensi.</p>
+            </div>
+            
+            <form id="admin-login-form" onsubmit="verifyAdminPassword(event)" class="space-y-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                        <i class="fa-solid fa-key text-xs"></i>
+                    </span>
+                    <input type="password" id="admin-gate-password" placeholder="Masukkan Sandi Admin" class="w-full bg-slate-50 border border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 rounded-xl py-2.5 pl-9 pr-10 text-xs font-mono text-slate-800 focus:outline-none transition-all">
+                    <button type="button" onclick="toggleGatePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                        <i id="gate-eye-icon" class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
+                
+                <div id="gate-error-msg" class="hidden text-[10px] text-rose-600 bg-rose-50 border border-rose-100 py-2 px-2.5 rounded-lg flex items-center gap-1.5 font-medium justify-center">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Sandi salah! Akses ditolak.</span>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md shadow-blue-500/10">
+                    Buka Panel Kontrol <i class="fa-solid fa-unlock ml-1 text-[10px]"></i>
+                </button>
+            </form>
+        </div>
     </div>
 
-    <!-- Container Utama Generator -->
-    <div class="w-full max-w-xl bg-white border border-blue-100 rounded-3xl overflow-hidden shadow-xl shadow-blue-100/40 p-6 md:p-8 space-y-6 relative">
-        
-        <!-- Header Menu & Fitur Reset -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-blue-50 pb-4">
-            <div class="space-y-1 text-center sm:text-left">
-                <span class="bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider inline-block">Panel Kontrol Admin</span>
-                <h2 class="text-lg font-extrabold text-slate-855">Generator Akses Kelas</h2>
-            </div>
-            <!-- Tombol Kustom Reset Counter -->
-            <button onclick="openResetModal()" class="text-xs bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-100 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm font-semibold">
-                <i class="fa-solid fa-trash-can text-[11px]"></i> Reset Counter
-            </button>
+    <!-- KONTEN UTAMA PANEL GENERATOR -->
+    <div id="admin-main-content" class="hidden w-full max-w-xl space-y-6">
+        <div class="w-full text-center space-y-2">
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Sistem Generator Lisensi (index.html)
+            </h1>
+            <p class="text-xs md:text-sm text-slate-500 font-medium">
+                Halaman rahasia Admin untuk generate password & link otomatis langsung masuk kelas.
+            </p>
         </div>
 
-        <!-- Pilihan Tipe Lisensi -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Container Utama Generator -->
+        <div class="bg-white border border-blue-100 rounded-3xl overflow-hidden shadow-xl shadow-blue-100/40 p-6 md:p-8 space-y-6 relative">
             
-            <!-- Tombol Password Trial (Masa aktif 1 Jam) -->
-            <button onclick="generatePassword('Trial', '1 Jam')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
-                <div class="flex justify-between items-start w-full">
-                    <span class="text-blue-500 text-lg"><i class="fa-solid fa-clock"></i></span>
-                    <span id="trial-counter-badge" class="hidden items-center gap-1 text-[10px] bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full text-blue-600 font-extrabold">
-                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
-                        <span id="trial-count-value">0</span>x
-                    </span>
+            <!-- Header Menu & Fitur Reset -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-blue-50 pb-4">
+                <div class="space-y-1 text-center sm:text-left">
+                    <span class="bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider inline-block">Panel Kontrol Admin</span>
+                    <h2 class="text-lg font-extrabold text-slate-855">Generator Akses Kelas</h2>
                 </div>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition">Password Trial</h3>
-                    <p class="text-[10px] text-slate-400">Masa aktif selama 1 Jam</p>
+                
+                <div class="flex items-center gap-2">
+                    <!-- Tombol Kustom Reset Counter -->
+                    <button onclick="openResetModal()" class="text-xs bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-100 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm font-semibold">
+                        <i class="fa-solid fa-trash-can text-[11px]"></i> Reset Counter
+                    </button>
+                    <!-- Tombol Logout Admin Sesi -->
+                    <button onclick="logoutAdminGate()" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 px-3 py-2 rounded-xl transition-all flex items-center gap-1 shadow-sm font-semibold" title="Kunci Kembali Halaman">
+                        <i class="fa-solid fa-lock text-[10px]"></i> Kunci
+                    </button>
                 </div>
-            </button>
-
-            <!-- Tombol Password Harian (Masa aktif 24 Jam) -->
-            <button onclick="generatePassword('Harian', '24 Jam')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
-                <div class="flex justify-between items-start w-full">
-                    <span class="text-indigo-500 text-lg"><i class="fa-solid fa-calendar-day"></i></span>
-                    <span id="harian-counter-badge" class="hidden items-center gap-1 text-[10px] bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-full text-indigo-600 font-extrabold">
-                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
-                        <span id="harian-count-value">0</span>x
-                    </span>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition">Password 1 Hari</h3>
-                    <p class="text-[10px] text-slate-400">Masa aktif selama 24 Jam</p>
-                </div>
-            </button>
-
-            <!-- Tombol Password Mingguan (Masa aktif 7 Hari) -->
-            <button onclick="generatePassword('Mingguan', '7 Hari')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
-                <div class="flex justify-between items-start w-full">
-                    <span class="text-cyan-500 text-lg"><i class="fa-solid fa-calendar-week"></i></span>
-                    <span id="mingguan-counter-badge" class="hidden items-center gap-1 text-[10px] bg-cyan-100 border border-cyan-200 px-2 py-0.5 rounded-full text-cyan-600 font-extrabold">
-                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
-                        <span id="mingguan-count-value">0</span>x
-                    </span>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-cyan-600 transition">Password 1 Minggu</h3>
-                    <p class="text-[10px] text-slate-400">Masa aktif selama 7 Hari</p>
-                </div>
-            </button>
-
-            <!-- Tombol Password Bulanan (Masa aktif 30 Hari) -->
-            <button onclick="generatePassword('Bulanan', '30 Hari')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
-                <div class="flex justify-between items-start w-full">
-                    <span class="text-rose-500 text-lg"><i class="fa-solid fa-calendar-days"></i></span>
-                    <span id="bulanan-counter-badge" class="hidden items-center gap-1 text-[10px] bg-rose-100 border border-rose-200 px-2 py-0.5 rounded-full text-rose-600 font-extrabold">
-                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
-                        <span id="bulanan-count-value">0</span>x
-                    </span>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-rose-600 transition">Password 1 Bulan</h3>
-                    <p class="text-[10px] text-slate-400">Masa aktif selama 30 Hari</p>
-                </div>
-            </button>
-
-            <!-- Tombol Password Full (Lifetime) -->
-            <button onclick="generatePassword('Full Lifetime', 'Selamanya')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm md:col-span-2">
-                <div class="flex justify-between items-start w-full">
-                    <span class="text-purple-500 text-lg"><i class="fa-solid fa-infinity"></i></span>
-                    <span id="full-counter-badge" class="hidden items-center gap-1 text-[10px] bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-full text-purple-600 font-extrabold">
-                        <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
-                        <span id="full-count-value">0</span>x
-                    </span>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-800 group-hover:text-purple-600 transition">Password Full</h3>
-                    <p class="text-[10px] text-slate-400">Akses Selamanya (Lifetime)</p>
-                </div>
-            </button>
-        </div>
-
-        <!-- Box Tampilan Hasil Password & Direct Link -->
-        <div id="result-box" class="hidden animate-fade-in bg-blue-50/50 border border-blue-100 rounded-2xl p-4 space-y-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Hasil Generate Berhasil</p>
-                    <p class="text-xs text-blue-600 font-medium" id="result-desc"></p>
-                </div>
-                <span class="text-[10px] font-mono bg-blue-100 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md font-semibold animate-pulse" id="license-badge">TRIAL</span>
             </div>
 
-            <!-- Bagian Kode & Link Tersembunyi -->
-            <div class="space-y-3">
-                <!-- Kode Sandi (Masked) -->
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kode Akses Kelas (Tersembunyi)</label>
-                    <div class="relative flex items-center bg-white border border-blue-100 rounded-xl px-4 py-2.5 shadow-sm">
-                        <span id="masked-password-placeholder" class="text-sm font-mono font-bold tracking-widest text-slate-300">••••••</span>
-                        <input type="text" id="actual-password-hidden" class="hidden">
-                        <div class="absolute right-2 flex items-center gap-1">
-                            <button onclick="togglePasswordVisibility()" class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors" title="Lihat Password">
-                                <i id="toggle-eye-icon" class="fa-solid fa-eye-slash text-xs"></i>
-                            </button>
+            <!-- Pilihan Tipe Lisensi -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                
+                <!-- Tombol Password Trial (Masa aktif 1 Jam) -->
+                <button onclick="generatePassword('Trial', '1 Jam')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                    <div class="flex justify-between items-start w-full">
+                        <span class="text-blue-500 text-lg"><i class="fa-solid fa-clock"></i></span>
+                        <span id="trial-counter-badge" class="hidden items-center gap-1 text-[10px] bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full text-blue-600 font-extrabold">
+                            <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                            <span id="trial-count-value">0</span>x
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition">Password Trial</h3>
+                        <p class="text-[10px] text-slate-400">Masa aktif selama 1 Jam</p>
+                    </div>
+                </button>
+
+                <!-- Tombol Password Harian (Masa aktif 24 Jam) -->
+                <button onclick="generatePassword('Harian', '24 Jam')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                    <div class="flex justify-between items-start w-full">
+                        <span class="text-indigo-500 text-lg"><i class="fa-solid fa-calendar-day"></i></span>
+                        <span id="harian-counter-badge" class="hidden items-center gap-1 text-[10px] bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-full text-indigo-600 font-extrabold">
+                            <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                            <span id="harian-count-value">0</span>x
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition">Password 1 Hari</h3>
+                        <p class="text-[10px] text-slate-400">Masa aktif selama 24 Jam</p>
+                    </div>
+                </button>
+
+                <!-- Tombol Password Mingguan (Masa aktif 7 Hari) -->
+                <button onclick="generatePassword('Mingguan', '7 Hari')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                    <div class="flex justify-between items-start w-full">
+                        <span class="text-cyan-500 text-lg"><i class="fa-solid fa-calendar-week"></i></span>
+                        <span id="mingguan-counter-badge" class="hidden items-center gap-1 text-[10px] bg-cyan-100 border border-cyan-200 px-2 py-0.5 rounded-full text-cyan-600 font-extrabold">
+                            <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                            <span id="mingguan-count-value">0</span>x
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-cyan-600 transition">Password 1 Minggu</h3>
+                        <p class="text-[10px] text-slate-400">Masa aktif selama 7 Hari</p>
+                    </div>
+                </button>
+
+                <!-- Tombol Password Bulanan (Masa aktif 30 Hari) -->
+                <button onclick="generatePassword('Bulanan', '30 Hari')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm">
+                    <div class="flex justify-between items-start w-full">
+                        <span class="text-rose-500 text-lg"><i class="fa-solid fa-calendar-days"></i></span>
+                        <span id="bulanan-counter-badge" class="hidden items-center gap-1 text-[10px] bg-rose-100 border border-rose-200 px-2 py-0.5 rounded-full text-rose-600 font-extrabold">
+                            <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                            <span id="bulanan-count-value">0</span>x
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-rose-600 transition">Password 1 Bulan</h3>
+                        <p class="text-[10px] text-slate-400">Masa aktif selama 30 Hari</p>
+                    </div>
+                </button>
+
+                <!-- Tombol Password Full (Lifetime) -->
+                <button onclick="generatePassword('Full Lifetime', 'Selamanya')" class="p-4 bg-white hover:bg-blue-50/30 border border-blue-100 hover:border-blue-500 rounded-2xl text-left transition-all group flex flex-col justify-between h-24 shadow-sm md:col-span-2">
+                    <div class="flex justify-between items-start w-full">
+                        <span class="text-purple-500 text-lg"><i class="fa-solid fa-infinity"></i></span>
+                        <span id="full-counter-badge" class="hidden items-center gap-1 text-[10px] bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-full text-purple-600 font-extrabold">
+                            <i class="fa-solid fa-arrows-rotate text-[8px] animate-spin"></i>
+                            <span id="full-count-value">0</span>x
+                        </span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 group-hover:text-purple-600 transition">Password Full</h3>
+                        <p class="text-[10px] text-slate-400">Akses Selamanya (Lifetime)</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Box Tampilan Hasil Password & Direct Link -->
+            <div id="result-box" class="hidden animate-fade-in bg-blue-50/50 border border-blue-100 rounded-2xl p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Hasil Generate Berhasil</p>
+                        <p class="text-xs text-blue-600 font-medium" id="result-desc"></p>
+                    </div>
+                    <span class="text-[10px] font-mono bg-blue-100 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md font-semibold animate-pulse" id="license-badge">TRIAL</span>
+                </div>
+
+                <!-- Bagian Kode & Link Tersembunyi -->
+                <div class="space-y-3">
+                    <!-- Kode Sandi (Masked) -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kode Akses Kelas (Tersembunyi)</label>
+                        <div class="relative flex items-center bg-white border border-blue-100 rounded-xl px-4 py-2.5 shadow-sm">
+                            <span id="masked-password-placeholder" class="text-sm font-mono font-bold tracking-widest text-slate-300">••••••</span>
+                            <input type="text" id="actual-password-hidden" class="hidden">
+                            <div class="absolute right-2 flex items-center gap-1">
+                                <button onclick="togglePasswordVisibility()" class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors" title="Lihat Password">
+                                    <i id="toggle-eye-icon" class="fa-solid fa-eye-slash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Link Direct yang akan di-copy -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preview Link Masuk Otomatis</label>
+                        <div class="bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm text-[10px] font-mono text-blue-600 truncate" id="link-preview-text">
+                            Membuat link...
                         </div>
                     </div>
                 </div>
 
-                <!-- Preview Link Direct yang akan di-copy -->
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preview Link Masuk Otomatis</label>
-                    <div class="bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm text-[10px] font-mono text-blue-600 truncate" id="link-preview-text">
-                        Membuat link...
-                    </div>
+                <!-- Tombol Salin Sekaligus (Kode & Link) -->
+                <button onclick="copyCodeAndLink()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15">
+                    <i id="copy-btn-icon" class="fa-solid fa-copy"></i>
+                    <span id="copy-btn-text">Salin Kode & Link Akses Sekaligus</span>
+                </button>
+
+                <!-- Tautan Fisik Langsung Menuju target file -->
+                <div class="pt-2 border-t border-blue-100/60 text-center">
+                    <a id="direct-dashboard-anchor" href="dashboard_trial.html" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold tracking-wide flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/10">
+                        <span>Coba Buka Portal Kelas</span>
+                        <i class="fa-solid fa-arrow-right-long"></i>
+                    </a>
                 </div>
-            </div>
-
-            <!-- Tombol Salin Sekaligus (Kode & Link) -->
-            <button onclick="copyCodeAndLink()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/15">
-                <i id="copy-btn-icon" class="fa-solid fa-copy"></i>
-                <span id="copy-btn-text">Salin Kode & Link Akses Sekaligus</span>
-            </button>
-
-            <!-- Tautan Fisik Langsung Menuju target file -->
-            <div class="pt-2 border-t border-blue-100/60 text-center">
-                <a id="direct-dashboard-anchor" href="dashboard_trial.html" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold tracking-wide flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/10">
-                    <span>Coba Buka Portal Kelas</span>
-                    <i class="fa-solid fa-arrow-right-long"></i>
-                </a>
             </div>
         </div>
     </div>
@@ -204,6 +248,10 @@
         const LOCAL_KEY_EXPIRY = 'app_saved_license_expiry';
         const LOCAL_KEY_LOGGED = 'app_user_is_logged_in';
         
+        // Key Kunci Lokal Otentikasi Admin
+        const ADMIN_GATE_PASS = "Rizal@123";
+        const ADMIN_SESSION_KEY = "app_admin_session_active";
+
         const COUNTER_KEYS = {
             'Trial': 'app_trial_regeneration_count',
             'Harian': 'app_harian_regeneration_count',
@@ -217,9 +265,71 @@
         let generatedLinkGlobal = "";
 
         document.addEventListener("DOMContentLoaded", () => {
+            checkAdminGateSession();
             initAllCounters();
         });
 
+        // -------------------------------------------------------------
+        // MANAJEMEN GERBANG KEAMANAN ADMIN (LOCAL GATE)
+        // -------------------------------------------------------------
+        function checkAdminGateSession() {
+            const isAuth = sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+            const gateOverlay = document.getElementById("admin-gate-overlay");
+            const mainContent = document.getElementById("admin-main-content");
+
+            if (isAuth) {
+                gateOverlay.classList.add("hidden");
+                mainContent.classList.remove("hidden");
+            } else {
+                gateOverlay.classList.remove("hidden");
+                mainContent.classList.add("hidden");
+                document.getElementById("admin-gate-password").focus();
+            }
+        }
+
+        function verifyAdminPassword(event) {
+            event.preventDefault();
+            const inputSandi = document.getElementById("admin-gate-password").value;
+            const errorMsg = document.getElementById("gate-error-msg");
+
+            if (inputSandi === ADMIN_GATE_PASS) {
+                errorMsg.classList.add("hidden");
+                sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+                
+                // Animasi buka panel kontrol
+                document.getElementById("admin-gate-overlay").classList.add("hidden");
+                document.getElementById("admin-main-content").classList.remove("hidden");
+                showToast("Akses Diterima! Selamat datang Admin.");
+                document.getElementById("admin-gate-password").value = "";
+            } else {
+                errorMsg.classList.remove("hidden");
+                document.getElementById("admin-gate-password").value = "";
+                document.getElementById("admin-gate-password").focus();
+            }
+        }
+
+        function toggleGatePasswordVisibility() {
+            const passwordInput = document.getElementById("admin-gate-password");
+            const eyeIcon = document.getElementById("gate-eye-icon");
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                eyeIcon.className = "fa-solid fa-eye-slash text-xs";
+            } else {
+                passwordInput.type = "password";
+                eyeIcon.className = "fa-solid fa-eye text-xs";
+            }
+        }
+
+        function logoutAdminGate() {
+            sessionStorage.removeItem(ADMIN_SESSION_KEY);
+            checkAdminGateSession();
+            showToast("Halaman dikunci kembali.");
+        }
+
+        // -------------------------------------------------------------
+        // MANAJEMEN COUNTER GENERATOR LISENSI
+        // -------------------------------------------------------------
         function initAllCounters() {
             Object.keys(COUNTER_KEYS).forEach(type => {
                 const storageKey = COUNTER_KEYS[type];
@@ -291,6 +401,9 @@
             showToast("Semua statistik counter di-reset ke 0!");
         }
 
+        // -------------------------------------------------------------
+        // INTEGRASI GENERATOR KODE LISENSI
+        // -------------------------------------------------------------
         function generatePassword(licenseType, expiry) {
             let generatedPass = '';
 
@@ -334,7 +447,7 @@
 
             isPasswordVisible = false;
             const maskPlaceholder = document.getElementById('masked-password-placeholder');
-            maskPlaceholder.innerText = "••••••";
+            maskPlaceholder.innerText = "•••••";
             maskPlaceholder.className = "text-sm font-mono font-bold tracking-widest text-slate-300";
             document.getElementById('toggle-eye-icon').className = 'fa-solid fa-eye-slash text-xs';
 
