@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Manajemen Sekolah & Penilaian Terintegrasi</title>
+  
+  <!-- CSS Libraries (Bootstrap 5, FontAwesome, DataTables) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Library html2pdf.js & SheetJS (XLSX) untuk Ekspor File Premium -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
+
+    :root {
+      --primary-color: #1E3A8A; /* Biru Gelap Premium */
+      --secondary-color: #3B82F6; /* Biru Cerah */
+      --accent-color: #60A5FA; /* Biru Muda */
+      --bg-light: #F0F6FF; /* Biru Putih Sangat Lembut */
+      --bg-white: #FFFFFF;
+      --transition-speed: 0.3s;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-light);
+      color: #1E293B;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      height: 100vh;
+      width: 260px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: linear-gradient(180deg, #1E3A8A 0%, #0F172A 100%);
+      color: #ffffff;
+      padding-top: 25px;
+      transition: all var(--transition-speed);
+      z-index: 100;
+      box-shadow: 4px 0 15px rgba(30, 58, 138, 0.15);
+    }
+
+    .sidebar .brand {
+      padding: 10px 25px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar .brand img.logo-sekolah {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: white;
+      padding: 2px;
+    }
+
+    .sidebar .nav-link {
+      color: rgba(255, 255, 255, 0.75);
+      padding: 12px 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-left: 4px solid transparent;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      border-left-color: var(--secondary-color);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      margin-left: 260px;
+      padding: 30px;
+      min-height: 100vh;
+      transition: all var(--transition-speed);
+    }
+
+    /* Floating Countdown Widget */
+    .countdown-widget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 14px 20px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(30, 58, 138, 0.3);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: all 0.3s ease;
+    }
+
+    /* Gatekeeper Overlay */
+    #gatekeeper-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #0f172a, #020617);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* Kartu Data Statistik di Dashboard */
+    .card-stat {
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 20px;
+      background-color: var(--bg-white);
+      box-shadow: 0 4px 20px rgba(148, 163, 184, 0.05);
+      transition: all var(--transition-speed);
+    }
+
+    .card-stat:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(30, 58, 138, 0.08);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    /* Form Input & Button Premium */
+    .form-control, .form-select {
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn {
+      border-radius: 10px;
+      font-weight: 600;
+      padding: 10px 20px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+      background-color: #152A66;
+      border-color: #152A66;
+    }
+
+    .btn-info {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      color: white;
+    }
+
+    .btn-info:hover {
+      background-color: #2563EB;
+      border-color: #2563EB;
+      color: white;
+    }
+
+    /* Mini input styling for 10-column grading system */
+    .input-grade-compact {
+      width: 58px;
+      text-align: center;
+      padding: 4px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border: 1px solid #CBD5E1;
+      font-weight: bold;
+    }
+
+    .input-grade-compact:focus {
+      border-color: var(--secondary-color);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    @media (max-width: 992px) {
+      .sidebar {
+        margin-left: -260px;
+      }
+      .sidebar.active {
+        margin-left: 0;
+      }
+      .main-content {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================== -->
+  <!-- GERBANG VERIFIKASI LISENSI & LOGIN (GATEKEEPER) -->
+  <!-- ========================================== -->
+  <div id="gatekeeper-overlay">
+    <div class="card border-0 shadow-2xl p-4 text-center my-4" style="max-width: 440px; width: 100%; border-radius: 28px; background: #ffffff; border: 1px solid rgba(191, 219, 254, 0.6); box-shadow: 0 20px 40px rgba(30, 58, 138, 0.08);">
+      <div class="card-body py-3">
+        <!-- Logo Sekolah -->
+        <div class="d-inline-flex align-items-center justify-content-center bg-blue-50 border border-blue-100 rounded-2xl p-2 mb-3 shadow-sm" style="width: 70px; height: 70px;">
+          <img src="logo sekolah.png" alt="Logo Sekolah" class="w-100 h-100 object-contain rounded" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2201/2201573.png'">
+        </div>
+        
+        <h3 class="fw-bold mb-1 tracking-tight text-slate-800">Akses Portal Belajar</h3>
+        <p class="text-slate-500 small mb-4">Silakan gunakan salah satu metode di bawah ini untuk mengakses dashboard utama sekolah.</p>
+
+        <!-- METODE A: USERNAME & PASSWORD (TERINTEGRASI PENUH DENGAN GOOGLE SHEETS FETCH API) -->
+        <form id="traditional-login-form" onsubmit="handleTraditionalLogin(event)" class="text-start mb-3">
+          <div class="mb-2">
+            <label class="form-label small fw-bold text-slate-700 mb-1">Username</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light border-slate-200 text-slate-400"><i class="fa-solid fa-user"></i></span>
+              <input type="text" id="login-username" placeholder="Masukkan username" class="form-control bg-white text-slate-800 border-slate-200" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-slate-700 mb-1">Password</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light border-slate-200 text-slate-400"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" id="login-password" placeholder="Masukkan password" class="form-control bg-white text-slate-800 border-slate-200" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm w-100 py-2.5 rounded-2 fw-bold shadow-sm">
+            Masuk dengan Akun (Fetch API) <i class="fa-solid fa-cloud ms-1"></i>
+          </button>
+        </form>
+
+        <!-- SEPARATOR / PEMBATAS VISUAL -->
+        <div class="d-flex align-items-center my-4">
+          <hr class="flex-grow-1 border-slate-200 opacity-60">
+          <span class="mx-3 text-slate-400 small fw-bold uppercase" style="font-size: 9px; letter-spacing: 1px;">ATAU LOGIN DENGAN LISENSI</span>
+          <hr class="flex-grow-1 border-slate-200 opacity-60">
+        </div>
+
+        <!-- METODE B: TOKEN / LISENSI (TERINTEGRASI PENUH DENGAN LOCALSTORAGE) -->
+        <form id="token-login-form" onsubmit="handleTokenLogin(event)" class="space-y-3 text-start">
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-slate-700 mb-1">Kode Lisensi Anda</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light border-slate-200 text-slate-400"><i class="fa-solid fa-key"></i></span>
+              <input type="text" id="manual-token-input" placeholder="Contoh: belajar_teknologi" class="form-control bg-white text-slate-800 border-slate-200 text-center font-monospace">
+            </div>
+            <div id="login-error-msg" class="text-danger small mt-2 d-none text-center bg-rose-50 border border-rose-100 p-2 rounded-lg">
+              <i class="fa-solid fa-triangle-exclamation"></i> <span id="error-text">Kode tidak sah atau sudah kedaluwarsa.</span>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-info btn-sm w-100 py-2.5 rounded-2 text-white fw-bold shadow-sm">
+            Verifikasi Lisensi (LocalStorage) <i class="fa-solid fa-database ms-1"></i>
+          </button>
+        </form>
+
+        <div class="mt-4 pt-3 border-top border-slate-100 text-start d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-slate-400 d-block" style="font-size: 9px;">Butuh bantuan?</span>
+            <a href="index.html" class="text-blue-600 small text-decoration-none fw-bold" style="font-size: 11px;"><i class="fa-solid fa-arrow-left me-1"></i> Buka Generator Admin</a>
+          </div>
+          <span class="text-slate-400 font-semibold" style="font-size: 10px;">Default: admin / admin123</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- LAYOUT UTAMA (SETELAH LOGIN / LISENSI LOLOS) -->
+  <!-- ========================================== -->
+  <div id="app-layout" class="d-none">
+    
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="brand">
+        <img src="logo sekolah.png" alt="Logo Sekolah" class="logo-sekolah" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2201/2201573.png'">
+        <span>SISTEM AKADEMIK</span>
+      </div>
+
+      <!-- Info Profil Guru Aktif di Sidebar -->
+      <div class="px-4 py-3 mb-3 border-bottom border-slate-800 d-flex align-items-center gap-3">
+        <div class="rounded-circle overflow-hidden bg-white border border-slate-700" style="width: 42px; height: 42px;">
+          <img src="guru.png" alt="Foto Guru" class="w-100 h-100 object-cover" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+        </div>
+        <div>
+          <span class="d-block text-white fw-bold truncate" id="sidebar-teacher-name" style="font-size: 0.85rem; max-width: 140px;">Nama Pengajar</span>
+          <span class="d-block text-slate-400 font-semibold text-uppercase" id="sidebar-teacher-role" style="font-size: 0.65rem;">GURU KELAS</span>
+        </div>
+      </div>
+
+      <nav class="nav flex-column">
+        <a class="nav-link active" href="#" onclick="showSection('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a class="nav-link" href="#" onclick="showSection('siswa')"><i class="fa-solid fa-users"></i> Data Siswa</a>
+        <a class="nav-link" href="#" onclick="showSection('guru')"><i class="fa-solid fa-chalkboard-user"></i> Data Guru</a>
+        <a class="nav-link" href="#" onclick="showSection('absensi')"><i class="fa-solid fa-clipboard-user"></i> Absensi Kelas</a>
+        <a class="nav-link" href="#" onclick="showSection('nilai')"><i class="fa-solid fa-file-invoice"></i> Penilaian Siswa</a>
+        <a class="nav-link" href="#" onclick="showSection('kuis')"><i class="fa-solid fa-circle-question"></i> Kuis Interaktif</a>
+        <a class="nav-link" href="#" onclick="showSection('database')"><i class="fa-solid fa-database text-info"></i> Sistem & Database</a>
+        <a class="nav-link text-info" href="#" onclick="tampilkanDiagnostikSesi()"><i class="fa-solid fa-stethoscope"></i> Diagnostik Sesi</a>
+        <a class="nav-link text-warning mt-auto border-top border-slate-800 pt-3" href="#" onclick="kunciUlangLisensi()"><i class="fa-solid fa-power-off"></i> Keluar Sesi</a>
+      </nav>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      
+      <!-- Top Header -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom border-blue-100">
+        <div>
+          <h4 class="fw-bold text-dark m-0">Selamat Datang di Portal Pembelajaran Premium</h4>
+          <p class="text-muted small m-0">Sistem pengelolaan data nilai, absensi, dan monitoring siswa secara real-time.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <!-- Tombol khusus reload Spreadsheet (Hanya muncul jika login via Fetch API) -->
+          <button id="btn-reload-spreadsheet" class="btn btn-sm btn-info d-none" onclick="reloadSpreadsheetData()"><i class="fa-solid fa-arrows-rotate me-1"></i> Reload dari Spreadsheet</button>
+          
+          <!-- Tombol Dinamis Lebih Lengkap -->
+          <a id="btn-lebih-lengkap" href="pengembangan1.html" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm fw-bold">
+            <i class="fa-solid fa-circle-info me-1"></i> Lebih Lengkap
+          </a>
+
+          <span id="badge-top-license" class="badge bg-primary px-3 py-2 rounded-3 text-uppercase">LISENSI AKTIF</span>
+          <button class="btn btn-sm btn-outline-danger" onclick="kunciUlangLisensi()"><i class="fa-solid fa-lock text-xs"></i> Kunci Sesi</button>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- SECTION: DASHBOARD -->
+      <!-- ========================================== -->
+      <section id="section-dashboard" class="app-section">
+        <!-- Banner Selamat Datang dengan Foto Guru -->
+        <div class="card border-0 bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 rounded-4 mb-4 shadow-lg d-flex flex-row align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="rounded-circle overflow-hidden bg-white border border-4 border-white/20" style="width: 70px; height: 70px;">
+              <img src="guru.png" alt="Foto Guru" class="w-100 h-100 object-cover" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+            </div>
+            <div>
+              <h5 class="fw-extrabold m-0">Halo, <span id="welcome-teacher-name">Rizal Fauzi</span>!</h5>
+              <p class="m-0 text-blue-200 small">Selamat mengajar hari ini. Evaluasi dan rekam perkembangan siswa secara digital.</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-white/20 border border-white/20 text-white px-3 py-2 rounded-3 text-xs"><i class="fa-solid fa-calendar me-1"></i> <span id="current-date-badge">Tahun Pelajaran SD</span></span>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="card card-stat p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted small uppercase">Total Siswa</h6>
+                  <h3 class="fw-bold text-dark m-0" id="dash-total-siswa">0</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3"><i class="fa-solid fa-users text-xl"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted small uppercase">Total Guru</h6>
+                  <h3 class="fw-bold text-dark m-0" id="dash-total-guru">0</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-3"><i class="fa-solid fa-chalkboard-user text-xl"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted small uppercase">Kehadiran Hari Ini</h6>
+                  <h3 class="fw-bold text-dark m-0" id="dash-kehadiran-persen">0%</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-3"><i class="fa-solid fa-clipboard-user text-xl"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card card-stat p-3">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h6 class="text-muted small uppercase">Rata-Rata Nilai</h6>
+                  <h3 class="fw-bold text-dark m-0" id="dash-rata-nilai">0</h3>
+                </div>
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3"><i class="fa-solid fa-star text-xl"></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+              <h5 class="fw-bold mb-3">Grafik Statistik Nilai Mata Pelajaran</h5>
+              <div style="height: 300px;"><canvas id="chartNilaiMapel"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white h-100">
+              <h5 class="fw-bold mb-3">Aktivitas Terbaru Kelas</h5>
+              <ul class="list-unstyled space-y-3" id="dash-log-activity">
+                <li class="d-flex gap-2.5 small"><i class="fa-solid fa-circle-check text-success mt-1"></i> Database Sekolah berhasil sinkronisasi otomatis.</li>
+                <li class="d-flex gap-2.5 small"><i class="fa-solid fa-clock text-info mt-1"></i> Sesi terotentikasi dan diamankan dari bypass penanggalan komputer.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION: DATA SISWA -->
+      <!-- ========================================== -->
+      <section id="section-siswa" class="app-section d-none">
+        <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+              <h5 class="fw-bold m-0">Manajemen Data Siswa</h5>
+              <p class="text-muted small m-0">Kelola informasi data siswa aktif sekolah.</p>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary" onclick="exportDataSiswaPDF()"><i class="fa-solid fa-file-pdf me-1"></i> Cetak PDF</button>
+              <button class="btn btn-primary" onclick="bukaModalSiswa()"><i class="fa-solid fa-user-plus me-1"></i> Tambah Siswa Baru</button>
+            </div>
+          </div>
+          <div class="table-responsive" id="print-area-siswa">
+            <table class="table table-hover align-middle" id="table-siswa">
+              <thead class="table-light">
+                <tr>
+                  <th>NISN</th>
+                  <th>Nama Lengkap</th>
+                  <th>Jenis Kelamin</th>
+                  <th>Kelas & Wali Kelas</th>
+                  <th>Alamat</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="siswa-list-target"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION: DATA GURU -->
+      <!-- ========================================== -->
+      <section id="section-guru" class="app-section d-none">
+        <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+              <h5 class="fw-bold m-0">Manajemen Data Guru</h5>
+              <p class="text-muted small m-0">Daftar guru pendidik beserta pengampu mata pelajaran.</p>
+            </div>
+            <button class="btn btn-success" onclick="bukaModalGuru()"><i class="fa-solid fa-user-tie me-1"></i> Tambah Guru Baru</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle" id="table-guru">
+              <thead class="table-light">
+                <tr>
+                  <th>NIP</th>
+                  <th>Nama Lengkap</th>
+                  <th>Mata Pelajaran</th>
+                  <th>Kontak</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="guru-list-target"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION: ABSENSI KELAS -->
+      <!-- ========================================== -->
+      <section id="section-absensi" class="app-section d-none">
+        <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+              <h5 class="fw-bold m-0">Absensi Kelas Harian</h5>
+              <p class="text-muted small m-0">Ambil dan pantau rekam kehadiran siswa hari ini.</p>
+            </div>
+            <div class="d-flex gap-2">
+              <input type="date" id="absensi-filter-date" class="form-control" onchange="loadAbsensiSiswa()">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Nama Siswa</th>
+                  <th>Kelas & Wali</th>
+                  <th>Status Kehadiran</th>
+                  <th>Aksi Cepat</th>
+                </tr>
+              </thead>
+              <tbody id="absensi-list-target"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION: PENILAIAN SISWA (BULK GRADING SYSTEM - 10 COLUMNS) -->
+      <!-- ========================================== -->
+      <section id="section-nilai" class="app-section d-none">
+        <div class="row g-4">
+          <!-- Kolom Input Nilai Kolektif / Kelas (All students display with 10 Columns) -->
+          <div class="col-xl-9">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+              <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-2">
+                <div>
+                  <h5 class="fw-extrabold text-slate-800 m-0"><i class="fa-solid fa-list-check text-warning me-1"></i> Penilaian Kelas Kolektif (10 Kolom)</h5>
+                  <p class="text-muted small m-0">Seluruh nama siswa otomatis dimuat. Pilih mata pelajaran dan ubah nilai per kolom, klik simpan jika selesai.</p>
+                </div>
+              </div>
+
+              <!-- Form Pengaturan Mapel & Materi Kolektif -->
+              <div class="row g-2 mb-4 bg-light p-3 rounded-3 border">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Pilih Mata Pelajaran SD</label>
+                  <select id="bulk-nilai-mapel" class="form-select" onchange="renderPenilaianGrid()">
+                    <option value="Pendidikan Agama & Budi Pekerti">Pendidikan Agama & Budi Pekerti</option>
+                    <option value="Pendidikan Pancasila (PPKn)">Pendidikan Pancasila (PPKn)</option>
+                    <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                    <option value="Matematika" selected>Matematika</option>
+                    <option value="Ilmu Pengetahuan Alam dan Sosial (IPAS)">Ilmu Pengetahuan Alam dan Sosial (IPAS)</option>
+                    <option value="Pendidikan Jasmani, Olahraga & Kesehatan (PJOK)">Pendidikan Jasmani, Olahraga & Kesehatan (PJOK)</option>
+                    <option value="Seni Budaya dan Prakarya (SBdP)">Seni Budaya dan Prakarya (SBdP)</option>
+                    <option value="Bahasa Inggris">Bahasa Inggris</option>
+                    <option value="Bahasa Jawa">Bahasa Jawa</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Materi / Deskripsi Penilaian</label>
+                  <input type="text" id="bulk-nilai-materi" class="form-control" placeholder="Contoh: Bab 1 Perkalian" value="Penilaian Harian" oninput="renderPenilaianGrid()">
+                </div>
+              </div>
+
+              <!-- Tabel Entri Nilai Massal 10 Kolom -->
+              <div class="table-responsive">
+                <table class="table table-hover align-middle border text-nowrap">
+                  <thead class="table-light text-center" style="font-size: 0.8rem;">
+                    <tr>
+                      <th class="text-start" style="min-width: 160px; vertical-align: middle;">Nama Siswa</th>
+                      <th style="width: 65px; vertical-align: middle;">PH 1</th>
+                      <th style="width: 65px; vertical-align: middle;">PH 2</th>
+                      <th style="width: 65px; vertical-align: middle;">PH 3</th>
+                      <th style="width: 65px; vertical-align: middle;">PH 4</th>
+                      <th style="width: 65px; vertical-align: middle;">PH 5</th>
+                      <th style="width: 65px; vertical-align: middle;">Tugas 1</th>
+                      <th style="width: 65px; vertical-align: middle;">Tugas 2</th>
+                      <th style="width: 65px; vertical-align: middle;">PTS</th>
+                      <th style="width: 65px; vertical-align: middle;">PAS</th>
+                      <th class="table-primary text-primary" style="width: 80px; vertical-align: middle;">Nilai Akhir</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bulk-nilai-list-target">
+                    <!-- Semua nama siswa di-render asinkron dengan nilai default 0 -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Tombol Aksi Simpan Masal -->
+              <div class="text-end mt-3">
+                <button class="btn btn-warning text-white fw-bold shadow-md" onclick="saveBulkGrades()">
+                  <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Semua Nilai Kelas
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kolom Riwayat Nilai yang Terdaftar -->
+          <div class="col-xl-3">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white h-100">
+              <h5 class="fw-bold mb-1"><i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Riwayat Entri</h5>
+              <p class="text-muted small mb-3">Daftar rekaman nilai akademis yang tersimpan di sistem.</p>
+              
+              <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+                <table class="table table-sm table-hover align-middle">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th>Nama & Mapel</th>
+                      <th class="text-center">Akhir</th>
+                      <th class="text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="nilai-list-target">
+                    <!-- Target daftar nilai historis -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION: KUIS INTERAKTIF -->
+      <!-- ========================================== -->
+      <section id="section-kuis" class="app-section d-none">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+              <h5 class="fw-bold mb-3"><i class="fa-solid fa-circle-question text-info me-1"></i> Mulai Kuis Interaktif Sederhana</h5>
+              <p class="text-muted small">Uji pemahaman Anda dengan menjawab pertanyaan akademis singkat.</p>
+              
+              <div id="quiz-question-box" class="bg-light p-3 rounded-3 border mb-3">
+                <span class="badge bg-secondary mb-2">Pertanyaan #1</span>
+                <p class="fw-bold text-dark mb-0" id="quiz-question-text">Berapakah hasil dari 12 x 12?</p>
+              </div>
+
+              <div class="space-y-2 mb-3">
+                <button class="btn btn-outline-secondary w-full text-start py-2.5 font-semibold" onclick="checkKuisAnswer(144)">A. 144</button>
+                <button class="btn btn-outline-secondary w-full text-start py-2.5 font-semibold" onclick="checkKuisAnswer(124)">B. 124</button>
+                <button class="btn btn-outline-secondary w-full text-start py-2.5 font-semibold" onclick="checkKuisAnswer(156)">C. 156</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+              <h5 class="fw-bold mb-3"><i class="fa-solid fa-trophy text-warning me-1"></i> Papan Peringkat Kuis</h5>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Nama</th>
+                      <th>Skor</th>
+                      <th>Tanggal</th>
+                    </tr>
+                  </thead>
+                  <tbody id="quiz-leaderboard-target"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- SECTION: SISTEM & DATABASE -->
+      <!-- ========================================== -->
+      <section id="section-database" class="app-section d-none">
+        <div class="card border-0 shadow-sm p-4 rounded-4 bg-white">
+          <h5 class="fw-bold mb-1"><i class="fa-solid fa-database text-blue-600 me-1"></i> Pengaturan Sistem & Manajemen Database</h5>
+          <p class="text-muted small mb-4">Gunakan alat pengaman ini untuk mengekspor atau mereset seluruh data master secara aman.</p>
+          
+          <div class="row g-4 mb-4">
+            <!-- Box Backup -->
+            <div class="col-md-6">
+              <div class="border border-blue-100 rounded-4 p-4 bg-light/50 h-100 flex flex-col justify-between">
+                <div>
+                  <div class="w-12 h-12 bg-primary/10 text-primary border border-primary/25 rounded-3 flex items-center justify-center text-xl mb-3">
+                    <i class="fa-solid fa-file-export"></i>
+                  </div>
+                  <h6 class="fw-bold text-dark">Cadangkan Data (Backup)</h6>
+                  <p class="text-muted small">Ekspor seluruh data akademik saat ini (Siswa, Guru, Absensi, Nilai, Kuis) menjadi file cadangan `.json` ke komputer Anda.</p>
+                </div>
+                <button class="btn btn-primary w-100 py-2.5 mt-3 fw-semibold shadow-md shadow-blue-900/10" onclick="backupDatabasePro()">
+                  <i class="fa-solid fa-download me-1"></i> Unduh File Backup (.json)
+                </button>
+              </div>
+            </div>
+
+            <!-- Box Reset -->
+            <div class="col-md-6">
+              <div class="border border-blue-100 rounded-4 p-4 bg-light/50 h-100 flex flex-col justify-between">
+                <div>
+                  <div class="w-12 h-12 bg-danger/10 text-danger border border-danger/25 rounded-3 flex items-center justify-center text-xl mb-3">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <h6 class="fw-bold text-dark">Bersihkan / Reset Data Master</h6>
+                  <p class="text-muted small">Mengosongkan seluruh database master. Sistem akan <strong>secara otomatis mengunduh file backup terlebih dahulu</strong> sebelum database di-reset untuk memastikan Anda memiliki salinan cadangan.</p>
+                </div>
+                <button class="btn btn-danger w-100 py-2.5 mt-3 fw-semibold shadow-md shadow-rose-900/10" onclick="resetDatabaseWithBackup()">
+                  <i class="fa-solid fa-trash-can me-1"></i> Reset Data Master & Auto-Backup
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BAGIAN BARU: EKSPOR REKAPAN NILAI SEMUA SISWA -->
+          <div class="border border-blue-200 rounded-4 p-4 bg-blue-50/40">
+            <h5 class="fw-extrabold text-slate-800 mb-1"><i class="fa-solid fa-print text-primary me-1"></i> Cetak Rekapan Nilai Semua Siswa</h5>
+            <p class="text-muted small mb-3">Unduh berkas rekapitulasi Nilai Akhir (Rapor Rata-rata) dari seluruh siswa aktif di kelas untuk semua 9 mata pelajaran.</p>
+            
+            <div class="d-flex flex-wrap gap-2.5">
+              <button class="btn btn-info text-white fw-bold shadow-sm" onclick="exportRecapPDF()">
+                <i class="fa-solid fa-file-pdf me-1"></i> Unduh Rekap Kelas (PDF)
+              </button>
+              <button class="btn btn-success text-white fw-bold shadow-sm" onclick="exportRecapExcel()">
+                <i class="fa-solid fa-file-excel me-1"></i> Unduh Rekap Kelas (Excel)
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- FLOATING COUNTDOWN WIDGET MELAYANG -->
+  <!-- ========================================== -->
+  <div id="floating-countdown" class="countdown-widget d-none">
+    <div class="bg-white bg-opacity-20 text-white p-2 rounded-xl flex items-center justify-center text-lg">
+      <i class="fa-solid fa-hourglass-half animate-spin"></i>
+    </div>
+    <div>
+      <span class="text-white d-block" style="font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Sisa Waktu Belajar Anda</span>
+      <span id="floating-countdown-timer" class="font-monospace fw-bold text-warning text-lg">00:00:00</span>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODALS AREA -->
+  <!-- ========================================== -->
+  
+  <!-- Modal Tambah Siswa -->
+  <div class="modal fade" id="modalSiswa" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold">Tambah Data Siswa</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form onsubmit="simpanDataSiswa(event)">
+          <div class="modal-body space-y-3">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">NISN</label>
+              <input type="text" id="siswa-nisn" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nama Lengkap</label>
+              <input type="text" id="siswa-nama" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Jenis Kelamin</label>
+              <select id="siswa-jk" class="form-select">
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Kelas</label>
+              <select id="siswa-kelas" class="form-select" required>
+                <option value="">-- Pilih Kelas SD --</option>
+                <option value="Kelas I">Kelas I</option>
+                <option value="Kelas II">Kelas II</option>
+                <option value="Kelas III">Kelas III</option>
+                <option value="Kelas IV">Kelas IV</option>
+                <option value="Kelas V">Kelas V</option>
+                <option value="Kelas VI">Kelas VI</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Alamat</label>
+              <textarea id="siswa-alamat" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Siswa</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Guru -->
+  <div class="modal fade" id="modalGuru" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold">Tambah Data Guru</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form onsubmit="simpanDataGuru(event)">
+          <div class="modal-body space-y-3">
+            <div class="mb-3">
+              <label class="form-label small fw-bold">NIP / Kode Guru</label>
+              <input type="text" id="guru-nip" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nama Lengkap & Gelar</label>
+              <input type="text" id="guru-nama" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Pengampu Mata Pelajaran / Jabatan</label>
+              <select id="guru-mapel" class="form-select" required>
+                <option value="">-- Pilih Mapel/Jabatan --</option>
+                <option value="Wali Kelas I">Wali Kelas I</option>
+                <option value="Wali Kelas II">Wali Kelas II</option>
+                <option value="Wali Kelas III">Wali Kelas III</option>
+                <option value="Wali Kelas IV">Wali Kelas IV</option>
+                <option value="Wali Kelas V">Wali Kelas V</option>
+                <option value="Wali Kelas VI">Wali Kelas VI</option>
+                <option value="Guru Agama Islam">Guru Agama Islam</option>
+                <option value="Guru PJOK">Guru PJOK</option>
+                <option value="Guru Bahasa Inggris">Guru Bahasa Inggris</option>
+                <option value="Guru Bahasa Jawa">Guru Bahasa Jawa</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">No. Kontak / WhatsApp</label>
+              <input type="text" id="guru-kontak" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-success">Simpan Guru</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL DIAGNOSTIK SESI (BAWAAN ORIGINAL) -->
+  <!-- ========================================== -->
+  <div class="modal fade" id="modalDiagnostik" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold"><i class="fa-solid fa-stethoscope me-1 text-info"></i> Diagnostik Sesi & Hubungan Spreadsheet</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body bg-light space-y-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="bg-white p-3 rounded-3 border">
+                <span class="text-muted small">Total Data Siswa</span>
+                <h4 class="fw-bold m-0 text-primary" id="diagCountSiswa">0</h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="bg-white p-3 rounded-3 border">
+                <span class="text-muted small">Total Data Guru</span>
+                <h4 class="fw-bold m-0 text-success" id="diagCountGuru">0</h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="bg-white p-3 rounded-3 border">
+                <span class="text-muted small">Total Rekam Absen</span>
+                <h4 class="fw-bold m-0 text-info" id="diagCountAbsensi">0</h4>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="bg-white p-3 rounded-3 border">
+                <span class="text-muted small">Total Input Nilai</span>
+                <h4 class="fw-bold m-0 text-warning" id="diagCountNilai">0</h4>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="bg-white p-3 rounded-3 border">
+                <span class="text-muted small">Matched Siswa (Kelas IV)</span>
+                <h4 class="fw-bold m-0 text-secondary" id="diagCountSiswaFilter">0</h4>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <label class="form-label small fw-bold">Cuplikan Memori Siswa Pertama (JSON):</label>
+            <pre class="bg-dark text-success p-3 rounded-3 overflow-auto text-xs" style="max-height: 180px;" id="diagSampleSiswa">Loading...</pre>
+          </div>
+        </div>
+        <div class="modal-footer bg-light flex justify-between">
+          <button type="button" class="btn btn-danger btn-sm" onclick="bersihkanSesiDanReset()"><i class="fa-solid fa-circle-minus"></i> Bersihkan Sesi & Reset Memori</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- SCRIPTS LOGIKA UTAMA -->
+  <!-- ========================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // -------------------------------------------------------------
+    // LOCALSTORAGE DATABASE CONFIG & ORIGINAL KEYS
+    // -------------------------------------------------------------
+    const DB_KEY = 'app_school_db';
+    const BLACKLIST_KEY_PREFIX = 'app_blacklisted_license_';
+    
+    // Login session keys
+    const SESSION_ACTIVE_KEY = 'app_user_logged_session';
+    const CURRENT_LICENSE_KEY = 'app_active_license_token';
+    const CURRENT_EXPIRY_TS_KEY = 'app_active_license_expiry_ts';
+    const CURRENT_TYPE_KEY = 'app_active_license_type';
+    const LOGIN_METHOD_KEY = 'app_login_method'; // Menyimpan jenis login (fetch vs local)
+
+    // Endpoint Google Apps Script Web App
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby-UmNjEHqauivPJXmqHGLTwmlpMrHwTTGXtWOnPBWIFlywfelO6VHAsbLi7uABihnq/exec";
+
+    // Akun Tradisional Default (Sebagai cadangan offline/fallback jika GAS gagal)
+    const DEFAULT_USER = "admin";
+    const DEFAULT_PASS = "admin123";
+
+    // Mapping Kelas dan Wali Kelas untuk tingkat SD
+    const kelasWaliMap = {
+      'Kelas I': 'Siti Rahma, S.Pd.',
+      'Kelas II': 'Ahmad Fauzi, S.Pd.',
+      'Kelas III': 'Dewi Sartika, S.Pd.',
+      'Kelas IV': 'Budi Santoso, M.Pd.',
+      'Kelas V': 'Larasati, M.Pd.',
+      'Kelas VI': 'Rian Hidayat, S.Pd.'
+    };
+
+    // Data sesi runtime user yang saat ini masuk
+    let currentUser = {
+      nama: "Rizal Fauzi",
+      kelas: "Kelas IV",
+      role: "Guru Kelas"
+    };
+
+    let diagModalInst = null;
+
+    // Inisialisasi Database Bawaan (Format SD Premium) jika di LocalStorage masih kosong
+    const defaultDatabase = {
+      siswa: [
+        { id: "SIS-001", nis: "1001", nisn: '10293801', nama: 'Rizal Fauzi', jk: 'Laki-laki', kelas: 'Kelas IV', alamat: 'Kota Malang' },
+        { id: "SIS-002", nis: "1002", nisn: '10293802', nama: 'Dewi Lestari', jk: 'Perempuan', kelas: 'Kelas IV', alamat: 'Kepanjen' },
+        { id: "SIS-003", nis: "1003", nisn: '10293803', nama: 'Amir Syarifuddin', jk: 'Laki-laki', kelas: 'Kelas V', alamat: 'Kota Batu' }
+      ],
+      guru: [
+        { id: "GUR-001", nip: '1982030219102', nama: 'Budi Santoso, M.Pd.', mapel: 'Wali Kelas IV', kontak: '08123456789' },
+        { id: "GUR-002", nip: '1987042319203', nama: 'Siti Rahma, S.Pd.', mapel: 'Wali Kelas I', kontak: '08122334455' }
+      ],
+      absensi: [
+        { id: "ABS-001", tanggal: getHariIniString(), kelas: "Kelas IV", siswa_id: "SIS-001", nama_siswa: 'Rizal Fauzi', status: 'Hadir' },
+        { id: "ABS-002", tanggal: getHariIniString(), kelas: "Kelas IV", siswa_id: "SIS-002", nama_siswa: 'Dewi Lestari', status: 'Sakit' },
+        { id: "ABS-003", tanggal: getHariIniString(), kelas: "Kelas V", siswa_id: "SIS-003", nama_siswa: 'Amir Syarifuddin', status: 'Hadir' }
+      ],
+      nilai: [
+        // Setiap baris menyimpan nilai lengkap 10 kolom (PH1-5, Tugas 1-2, PTS, PAS)
+        { 
+          id: "NIL-001", 
+          tanggal: getHariIniString(), 
+          kelas: "Kelas IV", 
+          mapel: 'Matematika', 
+          siswa_id: "SIS-001", 
+          nama_siswa: "Rizal Fauzi", 
+          materi: "Penilaian Harian", 
+          ph1: 85, ph2: 80, ph3: 90, ph4: 85, ph5: 90, 
+          t1: 80, t2: 85, 
+          uts: 80, uas: 90 
+        },
+        { 
+          id: "NIL-002", 
+          tanggal: getHariIniString(), 
+          kelas: "Kelas IV", 
+          mapel: 'Ilmu Pengetahuan Alam dan Sosial (IPAS)', 
+          siswa_id: "SIS-001", 
+          nama_siswa: "Rizal Fauzi", 
+          materi: "Penilaian Harian", 
+          ph1: 90, ph2: 92, ph3: 88, ph4: 90, ph5: 85, 
+          t1: 92, t2: 88, 
+          uts: 88, uas: 92 
+        },
+        { 
+          id: "NIL-003", 
+          tanggal: getHariIniString(), 
+          kelas: "Kelas IV", 
+          mapel: 'Bahasa Jawa', 
+          siswa_id: "SIS-002", 
+          nama_siswa: "Dewi Lestari", 
+          materi: "Penilaian Harian", 
+          ph1: 80, ph2: 75, ph3: 85, ph4: 80, ph5: 75, 
+          t1: 80, t2: 85, 
+          uts: 85, uas: 80 
+        }
+      ],
+      nilaiKuis: [
+        { id: "RES-001", kuis_id: "KUIS-1", siswa_id: "SIS-001", nama_siswa: 'Rizal Fauzi', skor: 100, tanggal_selesai: getHariIniString() }
+      ]
+    };
+
+    let database = JSON.parse(localStorage.getItem(DB_KEY)) || defaultDatabase;
+
+    // Fungsi utilitas helper POST fetch API yang aman dari preflight CORS issue menggunakan text/plain
+    async function executePostGAS(payload) {
+      try {
+        const response = await fetch(GAS_WEBAPP_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload)
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("Gagal melakukan panggilan API POST ke Apps Script:", error);
+        throw error;
+      }
+    }
+
+    function saveToLocalStorage() {
+      // Hanya simpan secara permanen ke localStorage jika menggunakan login offline/token
+      const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+      if (loginMethod !== 'fetch') {
+        localStorage.setItem(DB_KEY, JSON.stringify(database));
+      }
+    }
+
+    function getHariIniString() {
+      const now = new Date();
+      return now.toISOString().split('T')[0];
+    }
+
+    // -------------------------------------------------------------
+    // ALUR VERIFIKASI LOGIN (TRADISIONAL & TOKEN)
+    // -------------------------------------------------------------
+    let timerInterval = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Set Default Tanggal Filter Absensi
+      document.getElementById('absensi-filter-date').value = getHariIniString();
+      
+      // Ambil parameter URL otomatis jika masuk menggunakan link generate
+      const urlParams = new URLSearchParams(window.location.search);
+      const passParam = urlParams.get('pass');
+      const expiryParam = urlParams.get('expiry');
+      const typeParam = urlParams.get('type') || 'trial';
+
+      // Set tanggal TP
+      const currentYear = new Date().getFullYear();
+      document.getElementById('current-date-badge').innerText = `TP ${currentYear}/${currentYear + 1}`;
+
+      if (passParam && expiryParam) {
+        processIncomingUrlLicense(passParam, expiryParam, typeParam);
+      } else {
+        checkCurrentActiveLicense();
+      }
+    });
+
+    // METODE A: LOGIN TRADISIONAL (TERKONEKSI DENGAN GOOGLE APPS SCRIPT VIA POST FETCH API)
+    async function handleTraditionalLogin(event) {
+      event.preventDefault();
+      const userVal = document.getElementById('login-username').value.trim();
+      const passVal = document.getElementById('login-password').value;
+
+      // Sembunyikan pesan error yang mungkin tampil sebelumnya
+      const errorMsgBox = document.getElementById('login-error-msg');
+      if (errorMsgBox) errorMsgBox.classList.add('d-none');
+
+      // Tampilkan animasi loading saat memproses autentikasi ke server cloud API
+      Swal.fire({
+        title: 'Menghubungkan ke Server Cloud...',
+        text: 'Sedang memproses verifikasi kredensial menggunakan Fetch API POST.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      try {
+        // Melakukan Fetch ke GAS API menggunakan metode POST (CORS-Compliant via text/plain)
+        const result = await executePostGAS({
+          action: 'login',
+          username: userVal,
+          password: passVal
+        });
+
+        Swal.close();
+
+        if (result && result.success === true) {
+          const userData = result.user || {};
+          currentUser.nama = userData.nama || userVal;
+          currentUser.role = userData.role || "Staf Sekolah";
+          currentUser.kelas = userData.kelas || "Kelas IV";
+          
+          localStorage.setItem(LOGIN_METHOD_KEY, 'fetch'); // Sesi login via Fetch API
+          executeTraditionalLoginSuccess(currentUser.nama);
+        } else {
+          showGatekeeperError(result.message || "Kombinasi Username & Password ditolak oleh Server Cloud.");
+        }
+
+      } catch (error) {
+        Swal.close();
+        console.warn("Fetch API gagal atau CORS terhambat. Mengaktifkan verifikasi lokal darurat offline.");
+        
+        // Pelindung Utama: Jika server cloud down / offline, aktifkan fallback credential lokal default
+        if (userVal === DEFAULT_USER && passVal === DEFAULT_PASS) {
+          localStorage.setItem(LOGIN_METHOD_KEY, 'local'); // Login local fallback
+          currentUser.nama = "Rizal Fauzi";
+          currentUser.role = "Guru Kelas";
+          currentUser.kelas = "Kelas IV";
+          executeTraditionalLoginSuccess("Rizal Fauzi (Lokal)");
+        } else {
+          showGatekeeperError("Koneksi gagal. Pastikan koneksi internet aktif atau gunakan admin/admin123 offline.");
+        }
+      }
+    }
+
+    // Eksekutor Sesi Sukses Login Tradisional
+    function executeTraditionalLoginSuccess(displayName) {
+      localStorage.setItem(SESSION_ACTIVE_KEY, "true");
+      localStorage.setItem(CURRENT_LICENSE_KEY, displayName);
+      localStorage.setItem(CURRENT_EXPIRY_TS_KEY, "lifetime_session");
+      localStorage.setItem(CURRENT_TYPE_KEY, "lifetime");
+
+      unlockAppLayout();
+      showToastSuccess(`Selamat datang, ${displayName}!`);
+    }
+
+    // SINKRONISASI DATA DAN SPREADSHEET SECARA OTOMATIS (KHUSUS LOGIN FETCH API)
+    async function reloadSpreadsheetData() {
+      const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+      if (loginMethod !== 'fetch') return;
+
+      Swal.fire({
+        title: 'Sinkronisasi Spreadsheet...',
+        text: 'Mengunduh data siswa, guru, absensi, dan penilaian terbaru secara asinkron.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      try {
+        // Ambil data siswa
+        const responseSiswa = await executePostGAS({ action: 'getData', sheetName: 'Siswa' });
+        // Ambil data guru
+        const responseGuru = await executePostGAS({ action: 'getData', sheetName: 'Guru' });
+        // Ambil data absensi
+        const responseAbsensi = await executePostGAS({ action: 'getData', sheetName: 'Absensi' });
+        // Ambil data penilaian
+        const responseNilai = await executePostGAS({ action: 'getData', sheetName: 'PenilaianHarian' });
+        // Ambil data kuis
+        const responseKuis = await executePostGAS({ action: 'getData', sheetName: 'HasilKuis' });
+
+        Swal.close();
+
+        // Gantikan data lokal di memory dengan data spreadsheet asli secara otomatis
+        database.siswa = (responseSiswa && responseSiswa.success) ? responseSiswa.data : database.siswa;
+        database.guru = (responseGuru && responseGuru.success) ? responseGuru.data : database.guru;
+        database.absensi = (responseAbsensi && responseAbsensi.success) ? responseAbsensi.data : database.absensi;
+        
+        // Memetakan field 'PenilaianHarian' GAS ke struktur internal 'nilai'
+        if (responseNilai && responseNilai.success) {
+          database.nilai = responseNilai.data.map(item => {
+            let payload = {
+              id: item.id,
+              tanggal: item.tanggal,
+              kelas: item.kelas,
+              mapel: item.mapel,
+              siswa_id: item.siswa_id,
+              nama_siswa: item.nama_siswa,
+              materi: item.materi || "Penilaian Harian",
+              ph1: 0, ph2: 0, ph3: 0, ph4: 0, ph5: 0,
+              t1: 0, t2: 0,
+              uts: parseInt(item.formatif) || 0,
+              uas: parseInt(item.sumatif) || 0
+            };
+
+            // Membaca dekripsi JSON dari kolom keterangan (jika ada) untuk mengembalikan 10 kolom nilai lengkap
+            try {
+              if (item.keterangan && item.keterangan.trim().startsWith('{')) {
+                const dec = JSON.parse(item.keterangan);
+                payload.ph1 = parseInt(dec.ph1) || 0;
+                payload.ph2 = parseInt(dec.ph2) || 0;
+                payload.ph3 = parseInt(dec.ph3) || 0;
+                payload.ph4 = parseInt(dec.ph4) || 0;
+                payload.ph5 = parseInt(dec.ph5) || 0;
+                payload.t1 = parseInt(dec.t1) || 0;
+                payload.t2 = parseInt(dec.t2) || 0;
+                payload.uts = parseInt(dec.uts) || payload.uts;
+                payload.uas = parseInt(dec.uas) || payload.uas;
+              } else {
+                payload.ph1 = parseInt(item.nilai_harian) || 0;
+              }
+            } catch (e) {
+              console.warn("Keterangan bukan JSON valid:", e);
+              payload.ph1 = parseInt(item.nilai_harian) || 0;
+            }
+
+            return payload;
+          });
+        }
+
+        if (responseKuis && responseKuis.success) {
+          database.nilaiKuis = responseKuis.data;
+        }
+        
+        renderAllData();
+        showToastSuccess("Data berhasil disinkronkan dengan Google Sheets!");
+      } catch (error) {
+        Swal.close();
+        console.error("Gagal sinkronisasi data spreadsheet:", error);
+        showToastError("Koneksi gagal. Menggunakan data memori lokal.");
+      }
+    }
+
+    // Menangani masukan Link Otomatis dari Admin
+    function processIncomingUrlLicense(pass, expiry, type) {
+      const expiryTimestamp = parseInt(expiry, 10);
+
+      // Cek apakah lisensi ini sudah ter-blacklist sebelumnya
+      if (localStorage.getItem(BLACKLIST_KEY_PREFIX + pass) === "true") {
+        showGatekeeperError(`Akses Ditolak! Kode lisensi [${pass}] telah hangus/kedaluwarsa sebelumnya.`);
+        return;
+      }
+
+      // Cek apakah waktu kedaluwarsa sudah terlewati sekarang
+      if (Date.now() >= expiryTimestamp) {
+        blacklistLicense(pass);
+        showGatekeeperError("Akses Gagal! Batas waktu lisensi ini telah berakhir (Expired).");
+        return;
+      }
+
+      // Jika sah, daftarkan lisensi ke localStorage sebagai status login aktif
+      localStorage.setItem(SESSION_ACTIVE_KEY, "true");
+      localStorage.setItem(CURRENT_LICENSE_KEY, pass);
+      localStorage.setItem(CURRENT_EXPIRY_TS_KEY, expiryTimestamp.toString());
+      localStorage.setItem(CURRENT_TYPE_KEY, type);
+      localStorage.setItem(LOGIN_METHOD_KEY, 'token'); // Sesi login via token
+
+      // Sinkronkan ke database generator lokal agar counter admin sinkron (simulasi)
+      localStorage.setItem(`license_${pass}`, JSON.stringify({
+        type: type,
+        expiry: expiryTimestamp,
+        created: Date.now()
+      }));
+
+      // Bersihkan Query Parameter di URL agar bersih & tidak mudah dicopy ulang langsung oleh siswa lain
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Masuk ke Portal
+      unlockAppLayout();
+    }
+
+    // Melakukan pengecekan sesi lisensi yang sedang aktif saat ini di browser
+    function checkCurrentActiveLicense() {
+      const isSessionActive = localStorage.getItem(SESSION_ACTIVE_KEY) === "true";
+      const activePass = localStorage.getItem(CURRENT_LICENSE_KEY);
+      const activeExpiry = localStorage.getItem(CURRENT_EXPIRY_TS_KEY);
+
+      if (isSessionActive && activePass && activeExpiry) {
+        if (activeExpiry === "lifetime_session") {
+          // Lolos Verifikasi Sesi Tradisional
+          unlockAppLayout();
+          return;
+        }
+
+        const expiryTimestamp = parseInt(activeExpiry, 10);
+
+        if (localStorage.getItem(BLACKLIST_KEY_PREFIX + activePass) === "true") {
+          forceLogoutAndBlock("Toleransi akses berakhir. Lisensi ini telah terdaftar dalam daftar hitam!");
+          return;
+        }
+
+        if (Date.now() >= expiryTimestamp) {
+          blacklistLicense(activePass);
+          forceLogoutAndBlock("Masa aktif belajar Anda telah berakhir!");
+          return;
+        }
+
+        // Lolos Verifikasi Sesi Lisensi
+        unlockAppLayout();
+      } else {
+        // Tampilkan halaman kunci
+        document.getElementById('gatekeeper-overlay').classList.remove('d-none');
+        document.getElementById('app-layout').classList.add('d-none');
+        document.getElementById('floating-countdown').classList.add('d-none');
+      }
+    }
+
+    // METODE B: LOGIN TOKEN (MENYAMBUNGKAN DAN MEMVALIDASI VIA LOCALSTORAGE)
+    function handleTokenLogin(event) {
+      event.preventDefault();
+      const typedToken = document.getElementById('manual-token-input').value.trim();
+
+      if (localStorage.getItem(BLACKLIST_KEY_PREFIX + typedToken) === "true") {
+        showGatekeeperError("Kode lisensi ini sudah hangus / diblokir otomatis oleh sistem!");
+        return;
+      }
+
+      // Sesuai Instruksi: Terhubung langsung dan divalidasi penuh melalui LocalStorage
+      const savedLicenseString = localStorage.getItem(`license_${typedToken}`);
+      
+      if (savedLicenseString) {
+        const licenseData = JSON.parse(savedLicenseString);
+        
+        if (Date.now() >= licenseData.expiry) {
+          blacklistLicense(typedToken);
+          showGatekeeperError("Masa aktif lisensi pada LocalStorage Anda telah kedaluwarsa!");
+          return;
+        }
+
+        // Simpan sebagai Lisensi Aktif di memori lokal
+        localStorage.setItem(SESSION_ACTIVE_KEY, "true");
+        localStorage.setItem(CURRENT_LICENSE_KEY, typedToken);
+        localStorage.setItem(CURRENT_EXPIRY_TS_KEY, licenseData.expiry.toString());
+        localStorage.setItem(CURRENT_TYPE_KEY, licenseData.type);
+        localStorage.setItem(LOGIN_METHOD_KEY, 'token');
+
+        unlockAppLayout();
+        showToastSuccess("Otentikasi Berhasil via LocalStorage Token!");
+      } else {
+        // Fallback token default tak terbatas (Offline Administrator)
+        if (typedToken === "belajar_teknologi") {
+          const lifetimeExpiry = Date.now() + (99 * 365 * 24 * 60 * 60 * 1000);
+          localStorage.setItem(SESSION_ACTIVE_KEY, "true");
+          localStorage.setItem(CURRENT_LICENSE_KEY, typedToken);
+          localStorage.setItem(CURRENT_EXPIRY_TS_KEY, lifetimeExpiry.toString());
+          localStorage.setItem(CURRENT_TYPE_KEY, 'lifetime');
+          localStorage.setItem(LOGIN_METHOD_KEY, 'token');
+          unlockAppLayout();
+          showToastSuccess("Berhasil Masuk Portal (Lisensi Lifetime)!");
+        } else {
+          showGatekeeperError("Kode token tidak terdaftar di dalam LocalStorage komputer Anda.");
+        }
+      }
+    }
+
+    // Membuka Tampilan Dashboard Utama
+    function unlockAppLayout() {
+      document.getElementById('gatekeeper-overlay').classList.add('d-none');
+      document.getElementById('app-layout').classList.remove('d-none');
+
+      const licenseType = localStorage.getItem(CURRENT_TYPE_KEY) || 'trial';
+      const licensePass = localStorage.getItem(CURRENT_LICENSE_KEY);
+      const licenseExpiry = localStorage.getItem(CURRENT_EXPIRY_TS_KEY);
+      const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+      
+      // Update badge atas
+      const topBadge = document.getElementById('badge-top-license');
+      topBadge.innerText = `LISENSI: ${licenseType.toUpperCase()} (${licensePass})`;
+
+      // Munculkan tombol reload spreadsheet jika metode loginnya adalah 'fetch' (Username/Password)
+      const btnReload = document.getElementById('btn-reload-spreadsheet');
+      if (loginMethod === 'fetch') {
+        btnReload.classList.remove('d-none');
+        // Otomatis muat ulang/sinkronisasi pertama kali setelah login/reload halaman
+        setTimeout(() => {
+          reloadSpreadsheetData();
+        }, 300);
+      } else {
+        btnReload.classList.add('d-none');
+      }
+
+      // Jalankan hitung mundur jika bukan lifetime tradisional maupun lifetime token
+      if (licenseExpiry !== "lifetime_session" && licenseType !== 'lifetime') {
+        document.getElementById('floating-countdown').classList.remove('d-none');
+        startCountdownTimer();
+      } else {
+        document.getElementById('floating-countdown').classList.add('d-none');
+      }
+
+      // Load Semua Data ke UI
+      renderAllData();
+    }
+
+    // Meluncurkan Countdown Timer Real-Time
+    function startCountdownTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+
+      const timerDisplay = document.getElementById('floating-countdown-timer');
+      const expiryTimestamp = parseInt(localStorage.getItem(CURRENT_EXPIRY_TS_KEY), 10);
+
+      function updateWidget() {
+        const sekarang = Date.now();
+        const selisih = expiryTimestamp - sekarang;
+
+        if (selisih <= 0) {
+          clearInterval(timerInterval);
+          const activePass = localStorage.getItem(CURRENT_LICENSE_KEY);
+          blacklistLicense(activePass);
+          forceLogoutAndBlock("Masa aktif lisensi Anda telah habis!");
+          return;
+        }
+
+        const totalDetik = Math.floor(selisih / 1000);
+        const jam = Math.floor(totalDetik / 3600);
+        const menit = Math.floor((totalDetik % 3600) / 60);
+        const detik = totalDetik % 60;
+
+        timerDisplay.innerText = `${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
+      }
+
+      updateWidget();
+      timerInterval = setInterval(updateWidget, 1000);
+    }
+
+    // Blokir Akses & Daftarkan ke Blacklist
+    function blacklistLicense(pass) {
+      if (pass && pass !== "admin_user" && !pass.includes("(")) {
+        localStorage.setItem(BLACKLIST_KEY_PREFIX + pass, "true");
+        localStorage.removeItem(`license_${pass}`); // Hapus dari daftar aktif lokal
+      }
+    }
+
+    // Memaksa Keluar & Blokir Saat Itu Juga (Anti-bypass)
+    function forceLogoutAndBlock(alasan) {
+      if (timerInterval) clearInterval(timerInterval);
+
+      // Bersihkan Session Login Aktif
+      localStorage.removeItem(SESSION_ACTIVE_KEY);
+      localStorage.removeItem(CURRENT_LICENSE_KEY);
+      localStorage.removeItem(CURRENT_EXPIRY_TS_KEY);
+      localStorage.removeItem(CURRENT_TYPE_KEY);
+      localStorage.removeItem(LOGIN_METHOD_KEY);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Akses Diblokir!',
+        text: alasan,
+        confirmButtonColor: '#1E3A8A',
+        confirmButtonText: 'Kembali',
+        allowOutsideClick: false
+      }).then(() => {
+        location.reload();
+      });
+    }
+
+    function kunciUlangLisensi() {
+      Swal.fire({
+        title: 'Kunci Sesi Belajar?',
+        text: "Anda harus memasukkan kembali password akun atau kode lisensi saat ingin masuk berikutnya.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1E3A8A',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ya, Keluar!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.removeItem(SESSION_ACTIVE_KEY);
+          localStorage.removeItem(CURRENT_LICENSE_KEY);
+          localStorage.removeItem(CURRENT_EXPIRY_TS_KEY);
+          localStorage.removeItem(CURRENT_TYPE_KEY);
+          localStorage.removeItem(LOGIN_METHOD_KEY);
+          location.reload();
+        }
+      });
+    }
+
+    function showGatekeeperError(msg) {
+      const errBox = document.getElementById('login-error-msg');
+      const errTxt = document.getElementById('error-text');
+      errTxt.innerText = msg;
+      errBox.classList.remove('d-none');
+    }
+
+    // -------------------------------------------------------------
+    // NAVIGASI SECTION UTAMA & SINKRONISASI LINK "LEBIH LENGKAP"
+    // -------------------------------------------------------------
+    function showSection(sectionId) {
+      // Sembunyikan semua section
+      document.querySelectorAll('.app-section').forEach(sec => sec.classList.add('d-none'));
+      // Hilangkan class active navigasi
+      document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
+
+      // Tampilkan yang dipilih
+      document.getElementById(`section-${sectionId}`).classList.remove('d-none');
+      
+      // Beri tanda aktif ke menu klik
+      const activeLink = Array.from(document.querySelectorAll('.sidebar .nav-link')).find(link => {
+        const targetAttr = link.getAttribute('onclick');
+        return targetAttr && targetAttr.includes(`'${sectionId}'`);
+      });
+      if (activeLink) activeLink.classList.add('active');
+
+      // Tautkan Link "Lebih Lengkap" secara dinamis berdasarkan halaman aktif
+      const linkMap = {
+        'dashboard': 'pengembangan1.html',
+        'siswa': 'pengembangan2.html',
+        'guru': 'pengembangan3.html',
+        'absensi': 'pengembangan4.html',
+        'nilai': 'pengembangan5.html',
+        'kuis': 'pengembangan6.html',
+        'database': 'pengembangan7.html'
+      };
+
+      const btnLebihLengkap = document.getElementById('btn-lebih-lengkap');
+      if (btnLebihLengkap && linkMap[sectionId]) {
+        btnLebihLengkap.setAttribute('href', linkMap[sectionId]);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // FITUR BACKUP & RESET MASTER DATABASE (SECURE SYSTEM)
+    // -------------------------------------------------------------
+    function backupDatabasePro() {
+      try {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+        const downloadAnchor = document.createElement('a');
+        
+        const timestamp = new Date().toISOString().slice(0, 10);
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `database_sekolah_backup_${timestamp}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        
+        showToastSuccess("Database Berhasil Diekspor!");
+        return true;
+      } catch (error) {
+        showToastError("Gagal mencadangkan database.");
+        return false;
+      }
+    }
+
+    async function resetDatabaseWithBackup() {
+      Swal.fire({
+        title: 'Konfirmasi Reset Total',
+        text: "Sistem akan mencadangkan database Anda ke dalam berkas .json terlebih dahulu sebelum menghapus seluruh data siswa, guru, absensi, dan penilaian agar data Anda tetap aman.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Backup & Reset Sekarang',
+        cancelButtonText: 'Batal'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          // 1. Eksekusi Backup Otomatis Terlebih Dahulu
+          const isBackupSuccess = backupDatabasePro();
+
+          if (isBackupSuccess) {
+            // 2. Jika Backup Berhasil Terunduh, Eksekusi Pengosongan Seluruh Data Master
+            const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+            
+            if (loginMethod === 'fetch') {
+              try {
+                Swal.fire({ title: 'Menghapus data di Google Sheet...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                
+                // Melakukan pembersihan data master di Spreadsheet (opsional bulk delete, di sini kita reset array saja)
+                for (let s of database.siswa) {
+                  await executePostGAS({ action: 'deleteData', sheetName: 'Siswa', id: s.id });
+                }
+                for (let g of database.guru) {
+                  await executePostGAS({ action: 'deleteData', sheetName: 'Guru', id: g.id });
+                }
+                for (let a of database.absensi) {
+                  await executePostGAS({ action: 'deleteData', sheetName: 'Absensi', id: a.id });
+                }
+                for (let n of database.nilai) {
+                  await executePostGAS({ action: 'deleteData', sheetName: 'PenilaianHarian', id: n.id });
+                }
+              } catch (e) {
+                console.error("Sebagian data Google Sheet tidak terhapus sepenuhnya:", e);
+              }
+            }
+
+            database = {
+              siswa: [],
+              guru: [],
+              absensi: [],
+              nilai: [],
+              nilaiKuis: []
+            };
+            saveToLocalStorage();
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Reset Sukses!',
+              text: 'Seluruh database master telah dikosongkan. File cadangan Anda telah berhasil diunduh secara aman.',
+              confirmButtonColor: '#1E3A8A',
+              confirmButtonText: 'Muat Ulang Halaman'
+            }).then(() => {
+              location.reload();
+            });
+          }
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // LOGIKA CETAK PDF EKSPOR DATA SISWA (HTML2PDF.JS)
+    // -------------------------------------------------------------
+    function exportDataSiswaPDF() {
+      const element = document.getElementById('print-area-siswa');
+      const opt = {
+        margin:       10,
+        filename:     'Data_Siswa_Sistem_Akademik.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      // Jalankan eksport PDF
+      html2pdf().set(opt).from(element).save();
+      showToastSuccess("PDF sedang di-generate!");
+    }
+
+    // -------------------------------------------------------------
+    // LOGIKA MODAL DIAGNOSTIK MEMORI SESI (ORIGINAL DARI USER FILE)
+    // -------------------------------------------------------------
+    function isKelasSama(kelasA, kelasB) {
+      if (!kelasA || !kelasB) return false;
+      return kelasA.trim().toLowerCase() === kelasB.trim().toLowerCase();
+    }
+
+    function tampilkanDiagnostikSesi() {
+      document.getElementById('diagCountSiswa').innerText = database.siswa.length;
+      document.getElementById('diagCountGuru').innerText = database.guru.length;
+      document.getElementById('diagCountAbsensi').innerText = database.absensi.length;
+      document.getElementById('diagCountNilai').innerText = database.nilai.length;
+
+      const matchedSiswa = database.siswa.filter(s => isKelasSama(s.kelas, currentUser.kelas));
+      document.getElementById('diagCountSiswaFilter').innerText = matchedSiswa.length;
+
+      // Sediakan cuplikan JSON sesi aktif saat ini
+      const diagSessionObj = {
+        currentUser: currentUser,
+        loginMethod: localStorage.getItem(LOGIN_METHOD_KEY) || 'unknown',
+        databaseStatus: database.siswa.length > 0 ? "Loaded" : "Empty",
+        siswaSample: database.siswa.length > 0 ? database.siswa[0] : null
+      };
+      document.getElementById('diagSampleSiswa').innerText = JSON.stringify(diagSessionObj, null, 2);
+
+      diagModalInst = new bootstrap.Modal(document.getElementById('modalDiagnostik'));
+      diagModalInst.show();
+    }
+
+    function bersihkanSesiDanReset() {
+      localStorage.removeItem(SESSION_ACTIVE_KEY);
+      localStorage.removeItem(CURRENT_LICENSE_KEY);
+      localStorage.removeItem(CURRENT_EXPIRY_TS_KEY);
+      localStorage.removeItem(CURRENT_TYPE_KEY);
+      localStorage.removeItem(LOGIN_METHOD_KEY);
+      database = { siswa: [], guru: [], absensi: [], nilai: [], nilaiKuis: [] };
+      saveToLocalStorage();
+      
+      if (diagModalInst) {
+        diagModalInst.hide();
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Sesi Dihapus!',
+        text: 'Kuki & cache login browser Anda telah dibersihkan. Sistem akan dimuat ulang secara bersih.',
+        confirmButtonText: 'Segarkan Halaman'
+      }).then(() => {
+        location.reload();
+      });
+    }
+
+    // -------------------------------------------------------------
+    // RENDERING DATA & LOGIKA DATABASE SEKOLAH (PERSISTENCE LOCALSTORAGE)
+    // -------------------------------------------------------------
+    function renderAllData() {
+      renderDashboardStats();
+      renderSiswaTable();
+      renderGuruTable();
+      loadAbsensiSiswa();
+      renderNilaiTable();
+      renderLeaderboardKuis();
+      initChart();
+      renderPenilaianGrid(); // Memuat lembar penilaian massal otomatis
+    }
+
+    // 1. DASHBOARD STATS
+    function renderDashboardStats() {
+      document.getElementById('dash-total-siswa').innerText = database.siswa.length;
+      document.getElementById('dash-total-guru').innerText = database.guru.length;
+
+      // Persentase Kehadiran
+      const hariIni = getHariIniString();
+      const absenHariIni = database.absensi.filter(a => a.tanggal === hariIni);
+      if (absenHariIni.length > 0) {
+        const hadir = absenHariIni.filter(a => a.status === 'Hadir').length;
+        const persen = Math.round((hadir / absenHariIni.length) * 100);
+        document.getElementById('dash-kehadiran-persen').innerText = `${percent = persen}%`;
+      } else {
+        document.getElementById('dash-kehadiran-persen').innerText = "0%";
+      }
+
+      // Rata-Rata Nilai
+      if (database.nilai.length > 0) {
+        const total = database.nilai.reduce((acc, curr) => {
+          const rataSiswa = (parseFloat(curr.ph1) + parseFloat(curr.ph2) + parseFloat(curr.ph3) + parseFloat(curr.ph4) + parseFloat(curr.ph5) + parseFloat(curr.t1) + parseFloat(curr.t2) + parseFloat(curr.uts) + parseFloat(curr.uas)) / 9;
+          return acc + rataSiswa;
+        }, 0);
+        const rataGlobal = (total / database.nilai.length).toFixed(1);
+        document.getElementById('dash-rata-nilai').innerText = rataGlobal;
+      } else {
+        document.getElementById('dash-rata-nilai').innerText = "0";
+      }
+    }
+
+    // 2. DATA SISWA
+    let siswaModalInst = null;
+    function renderSiswaTable() {
+      const tbody = document.getElementById('siswa-list-target');
+      tbody.innerHTML = '';
+      
+      database.siswa.forEach((s, idx) => {
+        const waliName = kelasWaliMap[s.kelas] || "Belum ditentukan";
+        tbody.innerHTML += `
+          <tr>
+            <td class="font-monospace fw-bold text-primary">${s.nisn}</td>
+            <td class="fw-semibold text-slate-800">${s.nama}</td>
+            <td>${s.jk}</td>
+            <td>
+              <span class="badge bg-secondary mb-1 d-block w-fit">${s.kelas}</span>
+              <span class="text-xs text-muted d-block"><i class="fa-solid fa-user-tie text-[10px]"></i> Wali: ${waliName}</span>
+            </td>
+            <td>${s.alamat || '-'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-danger" onclick="hapusSiswa(${idx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+
+      // Update dropdown selection di input nilai
+      const selectSiswa = document.getElementById('nilai-siswa-select');
+      if (selectSiswa) {
+        selectSiswa.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        database.siswa.forEach(s => {
+          selectSiswa.innerHTML += `<option value="${s.id || s.nisn}">${s.nama} (${s.kelas})</option>`;
+        });
+      }
+    }
+
+    function bukaModalSiswa() {
+      document.getElementById('siswa-nisn').value = '';
+      document.getElementById('siswa-nama').value = '';
+      document.getElementById('siswa-kelas').value = '';
+      document.getElementById('siswa-alamat').value = '';
+      
+      siswaModalInst = new bootstrap.Modal(document.getElementById('modalSiswa'));
+      siswaModalInst.show();
+    }
+
+    async function simpanDataSiswa(e) {
+      e.preventDefault();
+      const nisn = document.getElementById('siswa-nisn').value.trim();
+      const nama = document.getElementById('siswa-nama').value.trim();
+      const jk = document.getElementById('siswa-jk').value;
+      const kelas = document.getElementById('siswa-kelas').value;
+      const alamat = document.getElementById('siswa-alamat').value.trim();
+
+      // Cek duplikasi NISN
+      if (database.siswa.some(s => s.nisn === nisn)) {
+        showToastError("Siswa dengan NISN tersebut sudah terdaftar!");
+        return;
+      }
+
+      const generatedId = "SIS-" + Math.floor(1000 + Math.random() * 9000);
+      const newSiswa = { id: generatedId, nis: nisn, nisn: nisn, nama, tempat_lahir: "Kota Batu", tanggal_lahir: "2015-01-01", gender: jk, agama: "Islam", alamat, nama_ayah: "Ayah", nama_ibu: "Ibu", phone_ortu: "081", kelas };
+
+      const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+      if (loginMethod === 'fetch') {
+        Swal.fire({ title: 'Menyimpan data ke Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        try {
+          const response = await fetch(`${GAS_WEBAPP_URL}?action=insertData`, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'insertData',
+              sheetName: 'Siswa',
+              data: newSiswa
+            })
+          });
+          const apiResult = await response.json();
+          Swal.close();
+          if (apiResult.success) {
+            showToastSuccess("Siswa sukses disimpan di Google Sheets!");
+            reloadSpreadsheetData();
+          } else {
+            showToastError("Gagal menyimpan ke Google Sheets.");
+          }
+        } catch (error) {
+          Swal.close();
+          showToastError("Gagal terhubung ke API. Disimpan lokal sementara.");
+        }
+      } else {
+        database.siswa.push(newSiswa);
+        saveToLocalStorage();
+        renderSiswaTable();
+        renderDashboardStats();
+        renderPenilaianGrid();
+        showToastSuccess("Siswa baru berhasil didaftarkan secara lokal!");
+      }
+      siswaModalInst.hide();
+    }
+
+    function hapusSiswa(idx) {
+      const s = database.siswa[idx];
+      Swal.fire({
+        title: 'Hapus data siswa?',
+        text: "Seluruh riwayat nilai dan absensi siswa ini juga akan dihapus.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+          if (loginMethod === 'fetch') {
+            Swal.fire({ title: 'Menghapus data di Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            fetch(GAS_WEBAPP_URL, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'deleteData',
+                sheetName: 'Siswa',
+                id: s.id
+              })
+            }).then(r => r.json()).then(res => {
+              Swal.close();
+              if (res.success) {
+                reloadSpreadsheetData();
+              } else {
+                showToastError(res.message);
+              }
+            }).catch(err => {
+              Swal.close();
+              showToastError("Koneksi gagal.");
+            });
+          } else {
+            database.absensi = database.absensi.filter(a => a.siswa_id !== s.id && a.nisn !== s.nisn);
+            database.nilai = database.nilai.filter(n => n.siswa_id !== s.id && n.nisn !== s.nisn);
+            database.siswa.splice(idx, 1);
+            saveToLocalStorage();
+            renderAllData();
+            showToastSuccess("Data siswa berhasil dihapus secara lokal.");
+          }
+        }
+      });
+    }
+
+    // 3. DATA GURU
+    let guruModalInst = null;
+    function renderGuruTable() {
+      const tbody = document.getElementById('guru-list-target');
+      tbody.innerHTML = '';
+      database.guru.forEach((g, idx) => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="font-monospace small text-primary">${g.nip}</td>
+            <td class="fw-semibold text-slate-800 d-flex align-items-center gap-2">
+              <div class="rounded-circle overflow-hidden bg-white border" style="width: 32px; height: 32px;">
+                <img src="guru.png" alt="Foto Guru" class="w-100 h-100 object-cover" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+              </div>
+              <span>${g.nama}</span>
+            </td>
+            <td><span class="badge bg-success">${g.mapel}</span></td>
+            <td>${g.kontak || g.phone || '-'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-danger" onclick="hapusGuru(${idx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function bukaModalGuru() {
+      document.getElementById('guru-nip').value = '';
+      document.getElementById('guru-nama').value = '';
+      document.getElementById('guru-mapel').value = '';
+      document.getElementById('guru-kontak').value = '';
+
+      guruModalInst = new bootstrap.Modal(document.getElementById('modalGuru'));
+      guruModalInst.show();
+    }
+
+    function simpanDataGuru(e) {
+      e.preventDefault();
+      const nip = document.getElementById('guru-nip').value.trim();
+      const nama = document.getElementById('guru-nama').value.trim();
+      const mapel = document.getElementById('guru-mapel').value;
+      const kontak = document.getElementById('guru-kontak').value.trim();
+
+      const newGuru = {
+        id: "GUR-" + Math.floor(Math.random() * 10000),
+        nip: nip,
+        nama: nama,
+        jabatan: "Guru Kelas",
+        mapel: mapel,
+        phone: kontak,
+        email: "-"
+      };
+
+      const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+      if (loginMethod === 'fetch') {
+        Swal.fire({ title: 'Menyimpan Guru ke Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        fetch(GAS_WEBAPP_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'insertData',
+            sheetName: 'Guru',
+            data: newGuru
+          })
+        }).then(r => r.json()).then(res => {
+          Swal.close();
+          if (res.success) {
+            reloadSpreadsheetData();
+            guruModalInst.hide();
+          } else {
+            showToastError(res.message);
+          }
+        }).catch(err => {
+          Swal.close();
+          showToastError("Koneksi gagal.");
+        });
+      } else {
+        database.guru.push(newGuru);
+        saveToLocalStorage();
+        renderGuruTable();
+        renderDashboardStats();
+        guruModalInst.hide();
+        showToastSuccess("Guru baru berhasil disimpan secara lokal!");
+      }
+    }
+
+    function hapusGuru(idx) {
+      const g = database.guru[idx];
+      Swal.fire({
+        title: 'Hapus data pendidik?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+          if (loginMethod === 'fetch') {
+            Swal.fire({ title: 'Menghapus data di Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            fetch(GAS_WEBAPP_URL, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'deleteData',
+                sheetName: 'Guru',
+                id: g.id
+              })
+            }).then(r => r.json()).then(res => {
+              Swal.close();
+              if (res.success) {
+                reloadSpreadsheetData();
+              } else {
+                showToastError(res.message);
+              }
+            }).catch(err => {
+              Swal.close();
+              showToastError("Koneksi gagal.");
+            });
+          } else {
+            database.guru.splice(idx, 1);
+            saveToLocalStorage();
+            renderGuruTable();
+            renderDashboardStats();
+            showToastSuccess("Data guru berhasil dihapus secara lokal.");
+          }
+        }
+      });
+    }
+
+    // 4. DATA ABSENSI
+    function loadAbsensiSiswa() {
+      const tbody = document.getElementById('absensi-list-target');
+      tbody.innerHTML = '';
+
+      const tglPilihan = document.getElementById('absensi-filter-date').value;
+
+      database.siswa.forEach(s => {
+        const dataAbsen = database.absensi.find(a => (a.siswa_id === s.id || a.nisn === s.nisn) && a.tanggal === tglPilihan);
+        const status = dataAbsen ? dataAbsen.status : 'Belum Diabsen';
+
+        let badgeClass = 'bg-secondary';
+        if (status === 'Hadir') badgeClass = 'bg-success';
+        else if (status === 'Sakit' || status === 'Izin') badgeClass = 'bg-info';
+        else if (status === 'Alfa') badgeClass = 'bg-danger';
+
+        const waliName = kelasWaliMap[s.kelas] || "Belum ditentukan";
+
+        tbody.innerHTML += `
+          <tr>
+            <td class="fw-semibold text-slate-800">${s.nama}</td>
+            <td>
+              <span class="badge bg-light text-dark border d-block w-fit mb-0.5">${s.kelas}</span>
+              <span class="text-[10px] text-muted d-block">Wali: ${waliName}</span>
+            </td>
+            <td><span class="badge ${badgeClass}">${status}</span></td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-success" onclick="absenSiswa('${s.id}', '${s.nama}', '${s.kelas}', 'Hadir')">Hadir</button>
+                <button class="btn btn-info text-white" onclick="absenSiswa('${s.id}', '${s.nama}', '${s.kelas}', 'Izin')">Izin</button>
+                <button class="btn btn-danger" onclick="absenSiswa('${s.id}', '${s.nama}', '${s.kelas}', 'Alfa')">Alfa</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    async function absenSiswa(siswaId, namaSiswa, kelas, status) {
+      const tglPilihan = document.getElementById('absensi-filter-date').value;
+      const idx = database.absensi.findIndex(a => (a.siswa_id === siswaId) && a.tanggal === tglPilihan);
+
+      const payload = {
+        id: idx !== -1 ? database.absensi[idx].id : ("ABS-" + Math.floor(Math.random() * 10000)),
+        tanggal: tglPilihan,
+        kelas: kelas,
+        siswa_id: siswaId,
+        nama_siswa: namaSiswa,
+        status: status
+      };
+
+      const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+      if (loginMethod === 'fetch') {
+        Swal.fire({ title: 'Menyimpan Absensi...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        try {
+          const action = idx !== -1 ? 'updateData' : 'insertData';
+          const res = await executePostGAS({
+            action: action,
+            sheetName: 'Absensi',
+            id: payload.id,
+            data: payload
+          });
+          Swal.close();
+          if (res.success) {
+            reloadSpreadsheetData();
+          } else {
+            showToastError(res.message);
+          }
+        } catch (e) {
+          Swal.close();
+          showToastError("Gagal menyimpan absensi ke Google Sheets.");
+        }
+      } else {
+        if (idx !== -1) {
+          database.absensi[idx].status = status;
+        } else {
+          database.absensi.push(payload);
+        }
+        saveToLocalStorage();
+        loadAbsensiSiswa();
+        renderDashboardStats();
+        showToastSuccess("Absensi disimpan secara lokal!");
+      }
+    }
+
+    // 5. PENILAIAN SISWA - LEMBAR ENTRI KOLEKTIF 10 KOLOM REAL-TIME
+    function renderPenilaianGrid() {
+      const tbody = document.getElementById('bulk-nilai-list-target');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (database.siswa.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted p-4">Belum ada data siswa aktif. Silakan isi data siswa terlebih dahulu.</td></tr>`;
+        return;
+      }
+
+      const activeMapel = document.getElementById('bulk-nilai-mapel').value;
+      const activeMateri = document.getElementById('bulk-nilai-materi').value.trim() || "Penilaian Harian";
+
+      database.siswa.forEach(s => {
+        // Cari apakah siswa ini sudah memiliki nilai terdaftar untuk mapel & materi ini
+        const existing = database.nilai.find(n => (n.siswa_id === s.id || n.siswa_id === s.nisn) && n.mapel === activeMapel && n.materi === activeMateri);
+
+        const ph1 = existing ? (existing.ph1 || 0) : 0;
+        const ph2 = existing ? (existing.ph2 || 0) : 0;
+        const ph3 = existing ? (existing.ph3 || 0) : 0;
+        const ph4 = existing ? (existing.ph4 || 0) : 0;
+        const ph5 = existing ? (existing.ph5 || 0) : 0;
+        const t1 = existing ? (existing.t1 || 0) : 0;
+        const t2 = existing ? (existing.t2 || 0) : 0;
+        const uts = existing ? (existing.uts || 0) : 0;
+        const uas = existing ? (existing.uas || 0) : 0;
+
+        const average = Math.round((parseFloat(ph1) + parseFloat(ph2) + parseFloat(ph3) + parseFloat(ph4) + parseFloat(ph5) + parseFloat(t1) + parseFloat(t2) + parseFloat(uts) + parseFloat(uas)) / 9);
+
+        tbody.innerHTML += `
+          <tr data-siswa-id="${s.id}" data-siswa-name="${s.nama}" data-siswa-kelas="${s.kelas}">
+            <td class="fw-bold text-slate-800" style="font-size: 0.85rem;">
+              ${s.nama}
+              <span class="text-muted d-block text-xs font-normal">NISN: ${s.nisn} | ${s.kelas}</span>
+            </td>
+            <td><input type="number" class="input-grade-compact input-ph1" min="0" max="100" value="${ph1}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-ph2" min="0" max="100" value="${ph2}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-ph3" min="0" max="100" value="${ph3}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-ph4" min="0" max="100" value="${ph4}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-ph5" min="0" max="100" value="${ph5}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-t1" min="0" max="100" value="${t1}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-t2" min="0" max="100" value="${t2}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-uts" min="0" max="100" value="${uts}" onchange="recalculateAverage10(this)"></td>
+            <td><input type="number" class="input-grade-compact input-uas" min="0" max="100" value="${uas}" onchange="recalculateAverage10(this)"></td>
+            <td class="text-center fw-bold text-primary font-monospace text-sm average-display table-primary" style="min-width: 80px;">
+              ${average}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Melakukan hitung ulang rata-rata lokal pada grid 10 kolom sebelum disimpan
+    function recalculateAverage10(inputEl) {
+      const row = inputEl.closest('tr');
+      const ph1 = parseFloat(row.querySelector('.input-ph1').value) || 0;
+      const ph2 = parseFloat(row.querySelector('.input-ph2').value) || 0;
+      const ph3 = parseFloat(row.querySelector('.input-ph3').value) || 0;
+      const ph4 = parseFloat(row.querySelector('.input-ph4').value) || 0;
+      const ph5 = parseFloat(row.querySelector('.input-ph5').value) || 0;
+      const t1 = parseFloat(row.querySelector('.input-t1').value) || 0;
+      const t2 = parseFloat(row.querySelector('.input-t2').value) || 0;
+      const uts = parseFloat(row.querySelector('.input-uts').value) || 0;
+      const uas = parseFloat(row.querySelector('.input-uas').value) || 0;
+
+      const average = Math.round((ph1 + ph2 + ph3 + ph4 + ph5 + t1 + t2 + uts + uas) / 9);
+      row.querySelector('.average-display').innerText = average;
+    }
+
+    // Aksi Simpan Masal ke Cloud/LocalStorage (Menyimpan 10 kolom nilai lengkap)
+    async function saveBulkGrades() {
+      const rows = document.querySelectorAll('#bulk-nilai-list-target tr');
+      if (rows.length === 0) return;
+
+      const activeMapel = document.getElementById('bulk-nilai-mapel').value;
+      const activeMateri = document.getElementById('bulk-nilai-materi').value.trim() || "Penilaian Harian";
+
+      Swal.fire({
+        title: 'Simpan Semua Nilai?',
+        text: `Sistem akan menyimpan/memperbarui nilai untuk ${rows.length} siswa pada mata pelajaran ${activeMapel}.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#1E3A8A',
+        confirmButtonText: 'Ya, Simpan Semua'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+          let successCount = 0;
+
+          if (loginMethod === 'fetch') {
+            Swal.fire({ title: 'Menyimpan nilai ke Google Sheet...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            
+            try {
+              for (let row of rows) {
+                const siswaId = row.getAttribute('data-siswa-id');
+                const siswaName = row.getAttribute('data-siswa-name');
+                const kelas = row.getAttribute('data-siswa-kelas');
+                
+                const ph1 = parseInt(row.querySelector('.input-ph1').value) || 0;
+                const ph2 = parseInt(row.querySelector('.input-ph2').value) || 0;
+                const ph3 = parseInt(row.querySelector('.input-ph3').value) || 0;
+                const ph4 = parseInt(row.querySelector('.input-ph4').value) || 0;
+                const ph5 = parseInt(row.querySelector('.input-ph5').value) || 0;
+                const t1 = parseInt(row.querySelector('.input-t1').value) || 0;
+                const t2 = parseInt(row.querySelector('.input-t2').value) || 0;
+                const uts = parseInt(row.querySelector('.input-uts').value) || 0;
+                const uas = parseInt(row.querySelector('.input-uas').value) || 0;
+                const average = Math.round((ph1 + ph2 + ph3 + ph4 + ph5 + t1 + t2 + uts + uas) / 9);
+
+                // Cari id nilai yang sudah ada sebelumnya
+                const existing = database.nilai.find(n => (n.siswa_id === siswaId) && n.mapel === activeMapel && n.materi === activeMateri);
+                const gradeId = existing ? existing.id : ("NIL-" + Math.floor(Math.random() * 100000));
+
+                // Serialisasi nilai lengkap agar tersimpan aman di kolom keterangan
+                const metadataGrades = JSON.stringify({ ph1, ph2, ph3, ph4, ph5, t1, t2, uts, uas });
+
+                const payload = {
+                  id: gradeId,
+                  tanggal: getHariIniString(),
+                  kelas: kelas,
+                  mapel: activeMapel,
+                  siswa_id: siswaId,
+                  nama_siswa: siswaName,
+                  materi: activeMateri,
+                  nilai_harian: ph1,       // fallback harian
+                  formatif: uts,           // formatif di Google Sheet
+                  sumatif: uas,            // sumatif di Google Sheet
+                  nilai_akhir: average,
+                  keterangan: metadataGrades // Menyimpan data 9 nilai individual
+                };
+
+                const action = existing ? 'updateData' : 'insertData';
+                await executePostGAS({
+                  action: action,
+                  sheetName: 'PenilaianHarian',
+                  id: gradeId,
+                  data: payload
+                });
+                successCount++;
+              }
+              Swal.close();
+              showToastSuccess(`Berhasil menyimpan ${successCount} nilai siswa ke Google Sheet!`);
+              reloadSpreadsheetData();
+            } catch (err) {
+              Swal.close();
+              showToastError("Sebagian atau seluruh nilai gagal dikirim ke Google Sheets.");
+            }
+          } else {
+            // Mode Lokal / Offline
+            rows.forEach(row => {
+              const siswaId = row.getAttribute('data-siswa-id');
+              const siswaName = row.getAttribute('data-siswa-name');
+              const kelas = row.getAttribute('data-siswa-kelas');
+              
+              const ph1 = parseInt(row.querySelector('.input-ph1').value) || 0;
+              const ph2 = parseInt(row.querySelector('.input-ph2').value) || 0;
+              const ph3 = parseInt(row.querySelector('.input-ph3').value) || 0;
+              const ph4 = parseInt(row.querySelector('.input-ph4').value) || 0;
+              const ph5 = parseInt(row.querySelector('.input-ph5').value) || 0;
+              const t1 = parseInt(row.querySelector('.input-t1').value) || 0;
+              const t2 = parseInt(row.querySelector('.input-t2').value) || 0;
+              const uts = parseInt(row.querySelector('.input-uts').value) || 0;
+              const uas = parseInt(row.querySelector('.input-uas').value) || 0;
+
+              const existingIdx = database.nilai.findIndex(n => (n.siswa_id === siswaId) && n.mapel === activeMapel && n.materi === activeMateri);
+
+              const payload = {
+                id: existingIdx !== -1 ? database.nilai[existingIdx].id : ("NIL-" + Math.floor(Math.random() * 100000)),
+                tanggal: getHariIniString(),
+                kelas: kelas,
+                mapel: activeMapel,
+                siswa_id: siswaId,
+                nama_siswa: siswaName,
+                materi: activeMateri,
+                ph1: ph1,
+                ph2: ph2,
+                ph3: ph3,
+                ph4: ph4,
+                ph5: ph5,
+                t1: t1,
+                t2: t2,
+                uts: uts,
+                uas: uas
+              };
+
+              if (existingIdx !== -1) {
+                database.nilai[existingIdx] = payload;
+              } else {
+                database.nilai.push(payload);
+              }
+            });
+
+            saveToLocalStorage();
+            renderNilaiTable();
+            renderDashboardStats();
+            initChart();
+            showToastSuccess("Semua nilai siswa berhasil disimpan secara lokal!");
+          }
+        }
+      });
+    }
+
+    function renderNilaiTable() {
+      const tbody = document.getElementById('nilai-list-target');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      database.nilai.forEach((n, idx) => {
+        const s = database.siswa.find(siswa => (siswa.id === n.siswa_id || siswa.nisn === n.siswa_id));
+        const namaSiswa = s ? s.nama : n.nama_siswa || 'Siswa Terhapus';
+        
+        const ph1 = n.ph1 || 0;
+        const ph2 = n.ph2 || 0;
+        const ph3 = n.ph3 || 0;
+        const ph4 = n.ph4 || 0;
+        const ph5 = n.ph5 || 0;
+        const t1 = n.t1 || 0;
+        const t2 = n.t2 || 0;
+        const uts = n.uts || 0;
+        const uas = n.uas || 0;
+        const rata = Math.round((parseFloat(ph1) + parseFloat(ph2) + parseFloat(ph3) + parseFloat(ph4) + parseFloat(ph5) + parseFloat(t1) + parseFloat(t2) + parseFloat(uts) + parseFloat(uas)) / 9);
+
+        tbody.innerHTML += `
+          <tr>
+            <td class="small">
+              <span class="fw-bold d-block text-slate-800">${namaSiswa}</span>
+              <span class="text-muted" style="font-size: 10px;">${n.mapel} (${n.materi})</span>
+            </td>
+            <td class="fw-bold text-primary font-monospace text-center small">${rata}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-danger py-1 px-2 text-[10px]" onclick="hapusNilai(${idx})"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function hapusNilai(idx) {
+      const n = database.nilai[idx];
+      Swal.fire({
+        title: 'Hapus data nilai?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        confirmButtonText: 'Ya, Hapus!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+          if (loginMethod === 'fetch') {
+            Swal.fire({ title: 'Menghapus Nilai...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            executePostGAS({
+              action: 'deleteData',
+              sheetName: 'PenilaianHarian',
+              id: n.id
+            }).then(res => {
+              Swal.close();
+              if (res.success) {
+                reloadSpreadsheetData();
+              } else {
+                showToastError(res.message);
+              }
+            }).catch(err => {
+              Swal.close();
+              showToastError("Gagal menghubungi Google Sheet API.");
+            });
+          } else {
+            database.nilai.splice(idx, 1);
+            saveToLocalStorage();
+            renderNilaiTable();
+            renderPenilaianGrid();
+            renderDashboardStats();
+            initChart();
+            showToastSuccess("Nilai berhasil dihapus secara lokal.");
+          }
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // FITUR CETAK REKAPAN NILAI SEMUA SISWA (EXCEL & PDF)
+    // -------------------------------------------------------------
+    const MAPEL_SD_LIST = [
+      'Pendidikan Agama & Budi Pekerti',
+      'Pendidikan Pancasila (PPKn)',
+      'Bahasa Indonesia',
+      'Matematika',
+      'Ilmu Pengetahuan Alam dan Sosial (IPAS)',
+      'Pendidikan Jasmani, Olahraga & Kesehatan (PJOK)',
+      'Seni Budaya dan Prakarya (SBdP)',
+      'Bahasa Inggris',
+      'Bahasa Jawa'
+    ];
+
+    // Fungsi menghitung rata-rata nilai akhir siswa untuk mapel tertentu
+    function getAverageForStudentMapel(siswaId, mapelName) {
+      const records = database.nilai.filter(n => (n.siswa_id === siswaId) && n.mapel === mapelName);
+      if (records.length === 0) return 0;
+      
+      let sum = 0;
+      records.forEach(n => {
+        const ph1 = n.ph1 || 0;
+        const ph2 = n.ph2 || 0;
+        const ph3 = n.ph3 || 0;
+        const ph4 = n.ph4 || 0;
+        const ph5 = n.ph5 || 0;
+        const t1 = n.t1 || 0;
+        const t2 = n.t2 || 0;
+        const uts = n.uts || 0;
+        const uas = n.uas || 0;
+        sum += Math.round((parseFloat(ph1) + parseFloat(ph2) + parseFloat(ph3) + parseFloat(ph4) + parseFloat(ph5) + parseFloat(t1) + parseFloat(t2) + parseFloat(uts) + parseFloat(uas)) / 9);
+      });
+      return Math.round(sum / records.length);
+    }
+
+    // 1. Ekspor Rekap Nilai Kolektif PDF
+    function exportDataSiswaPDF() {
+      const element = document.getElementById('print-area-siswa');
+      const opt = {
+        margin:       10,
+        filename:     'Data_Siswa_Sistem_Akademik.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+      showToastSuccess("PDF sedang di-generate!");
+    }
+
+    function backupDatabasePro() {
+      try {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database, null, 2));
+        const downloadAnchor = document.createElement('a');
+        
+        const timestamp = new Date().toISOString().slice(0, 10);
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `database_sekolah_backup_${timestamp}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        
+        showToastSuccess("Database Berhasil Diekspor!");
+        return true;
+      } catch (error) {
+        showToastError("Gagal mencadangkan database.");
+        return false;
+      }
+    }
+
+    // Ekspor PDF Rekapan Nilai Semua Siswa
+    function exportRecapPDF() {
+      if (database.siswa.length === 0) {
+        showToastError("Tidak ada data siswa untuk direkap.");
+        return;
+      }
+
+      // Buat container tersembunyi yang akan dijadikan PDF
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.padding = '15px';
+      pdfContainer.style.background = '#ffffff';
+      pdfContainer.style.color = '#000000';
+      pdfContainer.style.fontFamily = 'Arial, sans-serif';
+
+      const year = new Date().getFullYear();
+      let html = `
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+          <h4 style="margin: 0; font-weight: bold; text-transform: uppercase;">REKAPITULASI NILAI AKADEMIK SISWA</h4>
+          <h5 style="margin: 5px 0 0 0; font-weight: bold;">SEKOLAH DASAR NEGERI PREMIUM BATU</h5>
+          <p style="margin: 2px 0 0 0; font-size: 0.8rem; font-style: italic;">Tahun Pelajaran ${year}/${year + 1} - Wali Kelas: ${currentUser.nama}</p>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: center;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Nama Siswa</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Agama</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">PPKn</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">B. Indo</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">MTK</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">IPAS</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">PJOK</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Seni</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">B. Inggris</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">B. Jawa</th>
+              <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #e6f2ff;">Rata-Rata</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      database.siswa.forEach(s => {
+        let sum = 0;
+        let mapelScores = MAPEL_SD_LIST.map(m => {
+          const score = getAverageForStudentMapel(s.id, m);
+          sum += score;
+          return score;
+        });
+        const finalAverage = Math.round(sum / MAPEL_SD_LIST.length);
+
+        html += `
+          <tr>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">${s.nama}</td>
+            ${mapelScores.map(score => `<td style="border: 1px solid #ddd; padding: 8px;">${score}</td>`).join('')}
+            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #e6f2ff;">${finalAverage}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+        
+        <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 0.8rem;">
+          <div style="text-align: center; width: 200px;">
+            <p style="margin-bottom: 60px;">Mengetahui,<br>Kepala Sekolah</p>
+            <p style="font-weight: bold; text-decoration: underline;">Drs. H. Mulyono</p>
+            <p style="margin: 0; font-size: 0.75rem;">NIP. 196805121994031002</p>
+          </div>
+          <div style="text-align: center; width: 200px;">
+            <p style="margin-bottom: 60px;">Batu, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}<br>Wali Kelas</p>
+            <p style="font-weight: bold; text-decoration: underline;">${currentUser.nama}</p>
+            <p style="margin: 0; font-size: 0.75rem;">NIP. 198203022010121003</p>
+          </div>
+        </div>
+      `;
+
+      pdfContainer.innerHTML = html;
+
+      const opt = {
+        margin:       10,
+        filename:     `Rekap_Nilai_Kelas_Semua_Siswa_${year}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(pdfContainer).save();
+      showToastSuccess("Sedang mengunduh dokumen Rekapan PDF!");
+    }
+
+    // Ekspor Excel Rekapan Nilai Semua Siswa (.xlsx murni via SheetJS)
+    function exportRecapExcel() {
+      if (database.siswa.length === 0) {
+        showToastError("Tidak ada data siswa untuk diekspor.");
+        return;
+      }
+
+      // Buat data mentah untuk SheetJS
+      const excelRows = database.siswa.map(s => {
+        let sum = 0;
+        const rowObj = {
+          'NISN': s.nisn,
+          'Nama Siswa': s.nama,
+          'Kelas': s.kelas
+        };
+
+        MAPEL_SD_LIST.forEach(m => {
+          const score = getAverageForStudentMapel(s.id, m);
+          sum += score;
+          rowObj[m] = score;
+        });
+
+        rowObj['Rata-Rata Akhir'] = Math.round(sum / MAPEL_SD_LIST.length);
+        return rowObj;
+      });
+
+      // Proses Pembuatan Excel murni
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelRows);
+
+      // Tambahkan judul di bagian atas dengan mengatur manual cell jika diperlukan, 
+      // namun json_to_sheet sudah sangat aman dan kompatibel dengan semua jenis Spreadsheet
+      XLSX.utils.book_append_sheet(wb, ws, "Rekapan Nilai Kelas");
+
+      // Unduh file secara instan
+      const year = new Date().getFullYear();
+      XLSX.writeFile(wb, `Rekap_Nilai_Siswa_SD_${year}.xlsx`);
+      showToastSuccess("File Excel (.xlsx) sukses diunduh!");
+    }
+
+    // 6. KUIS & PAPAN PERINGKAT
+    function checkKuisAnswer(ans) {
+      if (ans === 144) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Jawaban Benar!',
+          text: 'Anda mendapatkan nilai 100.',
+          confirmButtonColor: '#1E3A8A',
+          confirmButtonText: 'Simpan Hasil'
+        }).then(async () => {
+          const lisensiUser = localStorage.getItem(CURRENT_LICENSE_KEY) || 'Siswa Keren';
+          const payload = {
+            id: "RES-" + Math.floor(Math.random() * 10000),
+            kuis_id: "KUIS-1",
+            siswa_id: "SIS-001",
+            nama_siswa: `Siswa (${lisensiUser})`,
+            skor: 100,
+            tanggal_selesai: getHariIniString()
+          };
+
+          const loginMethod = localStorage.getItem(LOGIN_METHOD_KEY);
+          if (loginMethod === 'fetch') {
+            Swal.fire({ title: 'Mengirim hasil kuis ke Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            try {
+              const res = await executePostGAS({
+                action: 'insertData',
+                sheetName: 'HasilKuis',
+                data: payload
+              });
+              Swal.close();
+              if (res.success) {
+                reloadSpreadsheetData();
+              }
+            } catch (e) {
+              Swal.close();
+            }
+          } else {
+            database.nilaiKuis.push(payload);
+            saveToLocalStorage();
+            renderLeaderboardKuis();
+          }
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Jawaban Salah!',
+          confirmButtonColor: '#e11d48',
+          text: 'Silakan pelajari lagi perkalian kuadrat.'
+        });
+      }
+    }
+
+    // Leaderboard
+    function renderLeaderboardKuis() {
+      const tbody = document.getElementById('quiz-leaderboard-target');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      const sortedKuis = [...database.nilaiKuis].sort((a, b) => b.skor - a.skor);
+
+      sortedKuis.slice(0, 5).forEach(k => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="small fw-semibold text-slate-700">${k.nama_siswa || k.nama}</td>
+            <td class="text-primary fw-bold font-monospace">${k.skor}</td>
+            <td class="small text-muted font-monospace">${k.tanggal_selesai || k.tanggal}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // 7. CHART JS STATISTIK (WARNA BIRU PREMIUM & ACCENT CERAH)
+    let statsChart = null;
+    function initChart() {
+      const ctx = document.getElementById('chartNilaiMapel');
+      if (!ctx) return;
+      const chartCtx = ctx.getContext('2d');
+      
+      const mapelData = {
+        'Pendidikan Agama & Budi Pekerti': { total: 0, count: 0 },
+        'Pendidikan Pancasila (PPKn)': { total: 0, count: 0 },
+        'Bahasa Indonesia': { total: 0, count: 0 },
+        'Matematika': { total: 0, count: 0 },
+        'Ilmu Pengetahuan Alam dan Sosial (IPAS)': { total: 0, count: 0 },
+        'Pendidikan Jasmani, Olahraga & Kesehatan (PJOK)': { total: 0, count: 0 },
+        'Seni Budaya dan Prakarya (SBdP)': { total: 0, count: 0 },
+        'Bahasa Inggris': { total: 0, count: 0 },
+        'Bahasa Jawa': { total: 0, count: 0 }
+      };
+
+      // Isi mapelData dengan data yang ada di database
+      database.nilai.forEach(n => {
+        if (mapelData[n.mapel] !== undefined) {
+          const ph1 = n.ph1 || 0;
+          const ph2 = n.ph2 || 0;
+          const ph3 = n.ph3 || 0;
+          const ph4 = n.ph4 || 0;
+          const ph5 = n.ph5 || 0;
+          const t1 = n.t1 || 0;
+          const t2 = n.t2 || 0;
+          const uts = n.uts || 0;
+          const uas = n.uas || 0;
+          mapelData[n.mapel].total += (parseFloat(ph1) + parseFloat(ph2) + parseFloat(ph3) + parseFloat(ph4) + parseFloat(ph5) + parseFloat(t1) + parseFloat(t2) + parseFloat(uts) + parseFloat(uas)) / 9;
+          mapelData[n.mapel].count++;
+        }
+      });
+
+      const labels = Object.keys(mapelData);
+      const values = labels.map(label => {
+        const item = mapelData[label];
+        return item.count > 0 ? Math.round(item.total / item.count) : 0;
+      });
+
+      if (statsChart) statsChart.destroy();
+
+      statsChart = new Chart(chartCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Rata-Rata Nilai Mapel SD',
+            data: values,
+            backgroundColor: 'rgba(30, 58, 138, 0.75)',
+            borderColor: '#1E3A8A',
+            borderWidth: 2,
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                font: {
+                  family: 'Plus Jakarta Sans',
+                  weight: '600'
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+
+    // Helper Toast Premium
+    function showToastSuccess(msg) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: msg,
+        showConfirmButton: false,
+        timer: 2000
+      });
+    }
+
+    function showToastError(msg) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: msg,
+        showConfirmButton: false,
+        timer: 2000
+      });
+    }
+  </script>
+</body>
+</html>

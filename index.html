@@ -55,7 +55,7 @@
     <div id="admin-main-content" class="hidden w-full max-w-xl space-y-6">
         <div class="w-full text-center space-y-2">
             <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Sistem Generator Lisensi (index.html)
+                Sistem Generator Lisensi
             </h1>
             <p class="text-xs md:text-sm text-slate-500 font-medium">
                 Halaman rahasia Admin untuk generate password & link otomatis langsung masuk kelas.
@@ -192,7 +192,7 @@
                     <!-- Preview Link Direct yang akan di-copy -->
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preview Link Masuk Otomatis</label>
-                        <div class="bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm text-[10px] font-mono text-blue-600 truncate" id="link-preview-text">
+                        <div class="bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm text-[10px] font-mono text-blue-600 truncate text-left" id="link-preview-text">
                             Membuat link...
                         </div>
                     </div>
@@ -206,7 +206,7 @@
 
                 <!-- Tautan Fisik Langsung Menuju target file -->
                 <div class="pt-2 border-t border-blue-100/60 text-center">
-                    <a id="direct-dashboard-anchor" href="dashboard_trial.html" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold tracking-wide flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/10">
+                    <a id="direct-dashboard-anchor" href="dashboard.html" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-3 px-4 rounded-xl text-xs font-bold tracking-wide flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/10">
                         <span>Coba Buka Portal Kelas</span>
                         <i class="fa-solid fa-arrow-right-long"></i>
                     </a>
@@ -260,7 +260,6 @@
             'Full Lifetime': 'app_full_regeneration_count'
         };
 
-        const LOCAL_KEY_TRIAL_EXPIRY_TS = 'app_saved_trial_expiry_timestamp';
         let isPasswordVisible = false;
         let generatedLinkGlobal = "";
 
@@ -402,7 +401,7 @@
         }
 
         // -------------------------------------------------------------
-        // INTEGRASI GENERATOR KODE LISENSI
+        // INTEGRASI GENERATOR KODE LISENSI + TIMESTAMPS
         // -------------------------------------------------------------
         function generatePassword(licenseType, expiry) {
             let generatedPass = '';
@@ -414,6 +413,7 @@
             
             updateCounterUI(licenseType, currentCount);
 
+            // 1. Generate Kode
             if (licenseType === 'Full Lifetime') {
                 generatedPass = 'belajar_teknologi';
             } else {
@@ -423,27 +423,50 @@
                 }
             }
 
+            // 2. Kalkulasi Timestamp Unix (Epoch) Sebenarnya untuk Countdown otomatis
+            const now = Date.now();
+            let durationMs = 0;
+            let typeParam = 'trial';
+
+            if (licenseType === 'Trial') {
+                durationMs = 1 * 60 * 60 * 1000; // 1 Jam
+                typeParam = 'trial';
+            } else if (licenseType === 'Harian') {
+                durationMs = 24 * 60 * 60 * 1000; // 24 Jam
+                typeParam = 'hari';
+            } else if (licenseType === 'Mingguan') {
+                durationMs = 7 * 24 * 60 * 60 * 1000; // 7 Hari
+                typeParam = 'minggu';
+            } else if (licenseType === 'Bulanan') {
+                durationMs = 30 * 24 * 60 * 60 * 1000; // 30 Hari
+                typeParam = 'bulan';
+            } else if (licenseType === 'Full Lifetime') {
+                durationMs = 99 * 365 * 24 * 60 * 60 * 1000; // Selamanya (99 tahun)
+                typeParam = 'lifetime';
+            }
+
+            const expiryTimestamp = now + durationMs;
+
             localStorage.setItem(LOCAL_KEY_PASS, generatedPass);
             localStorage.setItem(LOCAL_KEY_TYPE, licenseType);
             localStorage.setItem(LOCAL_KEY_EXPIRY, expiry);
+            localStorage.setItem('app_saved_license_expiry_ts', expiryTimestamp);
             localStorage.setItem(LOCAL_KEY_LOGGED, 'false'); 
 
-            // Tentukan nama file target dashboard yang sesuai
-            let targetFile = 'dashboard_trial.html';
-            if (licenseType === 'Harian') targetFile = 'dashboard_1_hari.html';
-            else if (licenseType === 'Mingguan') targetFile = 'dashboard_1_minggu.html';
-            else if (licenseType === 'Bulanan') targetFile = 'dashboard_1_bulan.html';
-            else if (licenseType === 'Full Lifetime') targetFile = 'dashboard_full.html';
+            // 3. SETTING FILE TARGET TERPADU -> dashboard.html
+            const targetFile = 'dashboard.html';
 
             // Dapatkan URL dasar folder saat ini
             const currentUrl = window.location.href;
             const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
-            const rawLink = `${baseUrl}/${targetFile}?pass=${generatedPass}&type=${encodeURIComponent(licenseType)}&expiry=${encodeURIComponent(expiry)}`;
+            
+            // Masukkan pass, type, dan expiry timestamp ke query param URL
+            const rawLink = `${baseUrl}/${targetFile}?pass=${generatedPass}&type=${typeParam}&expiry=${expiryTimestamp}`;
             generatedLinkGlobal = rawLink;
 
             document.getElementById('actual-password-hidden').value = generatedPass;
             document.getElementById('link-preview-text').innerText = rawLink;
-            document.getElementById('direct-dashboard-anchor').href = `${targetFile}?pass=${generatedPass}&type=${encodeURIComponent(licenseType)}&expiry=${encodeURIComponent(expiry)}`;
+            document.getElementById('direct-dashboard-anchor').href = rawLink;
 
             isPasswordVisible = false;
             const maskPlaceholder = document.getElementById('masked-password-placeholder');
