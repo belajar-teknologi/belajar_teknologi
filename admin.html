@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hubungi Pak Rizal - Pusat Bantuan</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome untuk Icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50/50 to-blue-100 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- KARTU UTAMA BANTUAN -->
+  <div class="w-full max-w-md bg-white border border-blue-100 rounded-3xl p-6 md:p-8 shadow-2xl shadow-blue-100/50 text-center transition-all duration-300 transform hover:scale-[1.01]">
+    
+    <!-- Bagian Atas / Logo Sekolah / Bantuan -->
+    <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl border border-blue-100 shadow-md shadow-blue-500/5">
+      <i class="fa-solid fa-headset animate-bounce"></i>
+    </div>
+    
+    <!-- Informasi Judul -->
+    <div class="space-y-2 mb-8">
+      <h2 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
+        Pusat Bantuan Sesi
+      </h2>
+      <p class="text-slate-500 text-xs leading-relaxed px-2 font-medium">
+        Apakah waktu belajar Anda habis atau mengalami kendala dengan akun Anda? Kirim pesan instan langsung ke WhatsApp pengembang untuk solusi cepat.
+      </p>
+    </div>
+
+    <!-- Tombol Hubungi WhatsApp (Biru & Putih) -->
+    <button onclick="kirimPesanBantuan()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-2xl font-bold text-sm tracking-wide transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2.5">
+      <i class="fa-brands fa-whatsapp text-xl"></i>
+      HUBUNGI PAK RIZAL (WA)
+    </button>
+
+    <!-- Footer / Navigasi Balik ke Dashboard -->
+    <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs">
+      <a href="dashboard.html" class="text-blue-600 hover:text-blue-800 font-bold transition duration-200 decoration-none flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali ke Dashboard
+      </a>
+      <span class="text-slate-400 font-bold">Tujuan: 0812-1743-3247</span>
+    </div>
+
+  </div>
+
+  <!-- TOAST NOTIFIKASI SUKSES (BIRU & PUTIH) -->
+  <div id="toast" class="fixed bottom-6 bg-white border border-blue-100 text-slate-800 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+    <div class="w-6 h-6 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xs border border-blue-100">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <p class="text-xs font-bold text-slate-700">Membuka aplikasi WhatsApp...</p>
+  </div>
+
+  <script>
+    function kirimPesanBantuan() {
+      // Nomor Tujuan Pak Rizal (Format Internasional: 6281217433247)
+      const nomorWA = "6281217433247";
+      
+      // Isi pesan otomatis yang akan dikirimkan
+      const isiPesan = "pak Rizal bagaimana cara menggunakan aplikasinya lagi saat waktu sesi habis";
+      
+      // Susun URL WhatsApp Web / Apps
+      const urlWA = `https://wa.me/${nomorWA}?text=${encodeURIComponent(isiPesan)}`;
+      
+      // Tampilkan notifikasi toast pemanis visual
+      showToast();
+
+      // Tunggu 1 detik agar animasi selesai, lalu arahkan
+      setTimeout(() => {
+        window.open(urlWA, '_blank');
+      }, 1000);
+    }
+
+    // Fungsi menampilkan notifikasi melayang
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.remove('opacity-0', 'translate-y-20');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-20');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
