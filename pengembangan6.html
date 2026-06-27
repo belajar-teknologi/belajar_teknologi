@@ -198,8 +198,8 @@
                 <a href="index.html" class="glow-button flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-xl border border-white/10 text-xs shadow-sm transition">
                     <i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda
                 </a>
-                <a href="https://aistudio.google.com/" target="_blank" class="glow-button flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2 px-4 rounded-xl border border-emerald-400/30 text-xs shadow-sm transition">
-                    <i class="fa-solid fa-key"></i> Daftar API Key Gemini (Gratis) <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-85"></i>
+                <a href="kuis.html" target="_blank" class="glow-button flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-2 px-4 rounded-xl border border-emerald-400/30 text-xs shadow-sm transition">
+                    <i class="fa-solid fa-key"></i> KUIS ONLINE <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-85"></i>
                 </a>
                 <div class="flex items-center gap-2 text-xs bg-black/20 px-3 py-1.5 rounded-full border border-white/10">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -534,11 +534,11 @@
                         </div>
                         <div>
                             <label class="block text-[10px] text-slate-500 mb-0.5">Sub Judul / Instansi</label>
-                            <input type="text" id="pdfHeaderSub" value="SD NEGERI 3 NGANTRU - KABUPATEN MALANG" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" id="pdfHeaderSub" value="" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
                         <div>
                             <label class="block text-[10px] text-slate-500 mb-0.5">Tahun Ajaran</label>
-                            <input type="text" id="pdfHeaderYear" value="TAHUN AJARAN 2025/2026" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <input type="text" id="pdfHeaderYear" value="" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         </div>
                     </div>
                 </div>
@@ -1579,9 +1579,9 @@
             const marginRight = parseInt(document.getElementById("pdfMarginRight").value) || 20;
             
             const headerTitle = document.getElementById("pdfHeaderTitle").value || "SOAL UJIAN SEKOLAH DASAR";
-            const headerSub = document.getElementById("pdfHeaderSub").value || "SD NEGERI 3 NGANTRU - KABUPATEN MALANG";
-            const headerYear = document.getElementById("pdfHeaderYear").value || "TAHUN AJARAN 2025/2026";
-            const footerLeft = document.getElementById("pdfFooterLeft").value || "Dinas Pendidikan Kabupaten Malang";
+            const headerSub = document.getElementById("pdfHeaderSub").value || "";
+            const headerYear = document.getElementById("pdfHeaderYear").value || "";
+            const footerLeft = document.getElementById("pdfFooterLeft").value || "";
             const footerRight = document.getElementById("pdfFooterRight").value || "Selamat Mengerjakan! - Jaga Kejujuran";
             const pageNumberStyle = document.getElementById("pdfPageNumber").value;
 
