@@ -1796,5 +1796,95 @@
             openPDFSettings();
         }
     </script>
+    <!-- ========================================== -->
+<!-- SCRIPT PENGAMAN SESI & AUTO-REDIRECT (PASTE SEBELUM </body>) -->
+<!-- ========================================== -->
+<script>
+  (function() {
+    // Kunci Sesi yang diselaraskan dengan dashboard.html
+    const SESSION_ACTIVE_KEY = 'app_user_logged_session';
+    const CURRENT_LICENSE_KEY = 'app_active_license_token';
+    const CURRENT_EXPIRY_TS_KEY = 'app_active_license_expiry_ts';
+    const BLACKLIST_KEY_PREFIX = 'app_blacklisted_license_';
+
+    function periksaSesiOtomatis() {
+      const isSessionActive = localStorage.getItem(SESSION_ACTIVE_KEY) === "true";
+      const activePass = localStorage.getItem(CURRENT_LICENSE_KEY);
+      const activeExpiry = localStorage.getItem(CURRENT_EXPIRY_TS_KEY);
+
+      // 1. Jika tidak ada sesi login aktif sama sekali, tendang kembali ke dashboard
+      if (!isSessionActive) {
+        keluarDanKembali();
+        return;
+      }
+
+      // 2. Jika login admin/akun tradisional (Lifetime) ATAU tidak ada waktu sesi yang diatur,
+      // maka diartikan sebagai NO LIMIT (Bebas Akses Tanpa Batas Waktu)
+      if (!activeExpiry || activeExpiry === "lifetime_session") {
+        return;
+      }
+
+      const expiryTimestamp = parseInt(activeExpiry, 10);
+
+      // Jika nilai expiry bukan angka yang valid, anggap sebagai NO LIMIT
+      if (isNaN(expiryTimestamp)) {
+        return;
+      }
+
+      // 3. Jika lisensi ini sudah di-blacklist sebelumnya, langsung blokir
+      if (activePass && localStorage.getItem(BLACKLIST_KEY_PREFIX + activePass) === "true") {
+        keluarDanKembali();
+        return;
+      }
+
+      // 4. Jika waktu sekarang sudah melewati batas kedaluwarsa
+      if (Date.now() >= expiryTimestamp) {
+        blacklistLisensiLokal(activePass);
+        keluarDanKembali();
+        return;
+      }
+
+      // 5. Pantau sisa waktu setiap 1 detik secara real-time
+      const monitorInterval = setInterval(() => {
+        const sekarang = Date.now();
+        
+        // Deteksi jika waktu habis
+        if (sekarang >= expiryTimestamp) {
+          clearInterval(monitorInterval);
+          blacklistLisensiLokal(activePass);
+          keluarDanKembali();
+        }
+      }, 1000);
+    }
+
+    function blacklistLisensiLokal(pass) {
+      if (pass && pass !== "admin_user" && !pass.includes("(")) {
+        localStorage.setItem(BLACKLIST_KEY_PREFIX + pass, "true");
+        localStorage.removeItem(`license_${pass}`); // Hapus dari daftar aktif lokal
+      }
+    }
+
+    function keluarDanKembali() {
+      // Hapus sesi login aktif saat ini agar dashboard.html langsung mengunci halaman
+      localStorage.removeItem(SESSION_ACTIVE_KEY);
+      localStorage.removeItem(CURRENT_LICENSE_KEY);
+      localStorage.removeItem(CURRENT_EXPIRY_TS_KEY);
+      localStorage.removeItem('app_active_license_type');
+      localStorage.removeItem('app_login_method');
+
+      // Arahkan otomatis kembali ke dashboard.html untuk memunculkan gerbang login
+      window.location.href = "dashboard.html";
+    }
+
+    // Jalankan pemeriksaan instan begitu dokumen selesai dimuat
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", periksaSesiOtomatis);
+    } else {
+      periksaSesiOtomatis();
+    }
+  })();
+</script>
+<!-- ========================================== -->
+
 </body>
 </html>
