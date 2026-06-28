@@ -87,7 +87,6 @@
             0%, 100% { color: #dc2626; }
             50% { color: #ef4444; }
         }
-        /* Style untuk preview PDF */
         .pdf-preview-container {
             max-height: 70vh;
             overflow-y: auto;
@@ -194,7 +193,6 @@
         #fullscreenWarning .warning-box button:hover {
             background: #ea580c;
         }
-        /* Peringatan keluar tab */
         #exitWarning {
             display: none;
             position: fixed;
@@ -218,11 +216,9 @@
             from { opacity: 0; transform: translateX(-50%) translateY(20px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
-        /* Sembunyikan tombol close di modal preview */
         .btn-close-hidden {
             display: none !important;
         }
-        /* Status kecurangan */
         .cheat-detected {
             background: #dc2626 !important;
             color: white !important;
@@ -232,11 +228,9 @@
             background: #f59e0b !important;
             color: white !important;
         }
-        /* Sembunyikan pointer fullscreen exit */
         .fullscreen-exit-hidden {
             display: none !important;
         }
-        /* Sembunyikan elemen fullscreen default browser */
         :-webkit-full-screen .fullscreen-exit-hidden {
             display: none !important;
         }
@@ -249,9 +243,58 @@
         :fullscreen .fullscreen-exit-hidden {
             display: none !important;
         }
-        /* Mencegah keluar fullscreen dengan ESC */
         .prevent-esc {
             cursor: default;
+        }
+        #sendingOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            flex-direction: column;
+        }
+        #sendingOverlay.show {
+            display: flex;
+        }
+        #sendingOverlay .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f97316;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #sendingOverlay .success-icon {
+            font-size: 48px;
+            color: #22c55e;
+            margin-bottom: 12px;
+        }
+        #sendingOverlay .error-icon {
+            font-size: 48px;
+            color: #ef4444;
+            margin-bottom: 12px;
+        }
+        /* Kunci Jawaban di PDF */
+        .kunci-jawaban-box {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 6px 0;
+            font-size: 10px;
+        }
+        .kunci-jawaban-box strong {
+            color: #b45309;
         }
     </style>
 </head>
@@ -268,6 +311,14 @@
                 <i class="bi bi-arrows-fullscreen"></i> Masuk Fullscreen
             </button>
         </div>
+    </div>
+
+    <!-- SENDING OVERLAY -->
+    <div id="sendingOverlay">
+        <div class="spinner" id="sendingSpinner"></div>
+        <div id="sendingIcon" style="display: none;"></div>
+        <h3 id="sendingTitle" class="text-lg font-bold">Mengirim Hasil Kuis...</h3>
+        <p id="sendingMessage" class="text-sm text-slate-300 mt-1">Mohon tunggu sebentar</p>
     </div>
 
     <!-- EXIT WARNING -->
@@ -327,8 +378,8 @@
                     <input type="text" id="studentName" placeholder="Tulis nama lengkap Anda..." class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:bg-white outline-none transition-all font-medium touch-target">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Nomor Absen:</label>
-                    <input type="number" id="studentNumber" placeholder="Contoh: 12" class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:bg-white outline-none transition-all font-medium touch-target">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nomor Induk Siswa (NIS):</label>
+                    <input type="text" id="studentNIS" placeholder="Contoh: 12345" class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:bg-white outline-none transition-all font-medium touch-target">
                 </div>
             </div>
         </section>
@@ -377,8 +428,8 @@
                     <span class="font-bold text-slate-800" id="resultName">-</span>
                 </div>
                 <div class="flex justify-between text-xs">
-                    <span class="text-slate-500">Nomor Absen:</span>
-                    <span class="font-bold text-slate-800" id="resultNumber">-</span>
+                    <span class="text-slate-500">NIS:</span>
+                    <span class="font-bold text-slate-800" id="resultNIS">-</span>
                 </div>
                 <div class="flex justify-between text-xs border-t border-slate-200 pt-2">
                     <span class="text-slate-500">Total Soal:</span>
@@ -396,11 +447,14 @@
                     <span class="text-slate-500 font-bold">Nilai Akhir:</span>
                     <span class="font-extrabold text-2xl text-teal-700" id="resultScore">0</span>
                 </div>
+                <div id="statusKirim" class="text-xs text-center mt-2 font-medium hidden">
+                    <span id="statusKirimText"></span>
+                </div>
             </div>
 
             <!-- Tombol Preview PDF -->
             <button onclick="showPDFPreview()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs py-3 rounded-xl active:scale-95 transition-all touch-target flex items-center justify-center gap-2">
-                <i class="bi bi-eye-fill"></i> Preview & Unduh PDF
+                <i class="bi bi-eye-fill"></i> Preview & Unduh PDF (dengan Kunci Jawaban)
             </button>
 
             <div class="space-y-2 mt-2">
@@ -416,9 +470,8 @@
         <div class="bg-white rounded-3xl p-4 w-full max-w-[500px] max-h-[95vh] shadow-2xl animate-[fadeIn_0.3s_ease] flex flex-col">
             <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
                 <h4 class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
-                    <i class="bi bi-file-pdf text-red-500"></i> Preview PDF
+                    <i class="bi bi-file-pdf text-red-500"></i> Preview PDF (dengan Kunci Jawaban)
                 </h4>
-                <!-- Tombol X dihilangkan -->
             </div>
             
             <div class="pdf-preview-container flex-1" id="pdfPreviewContent">
@@ -447,7 +500,6 @@
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
-        /* Sembunyikan elemen fullscreen exit dari browser */
         ::-webkit-full-screen .fullscreen-exit-hidden {
             display: none !important;
         }
@@ -460,17 +512,20 @@
         :fullscreen .fullscreen-exit-hidden {
             display: none !important;
         }
-        /* Sembunyikan tombol fullscreen exit di mobile */
         .fullscreen-exit-btn {
             display: none !important;
         }
-        /* Browser fullscreen exit button override */
         .fullscreen-exit-override {
             display: none !important;
         }
     </style>
 
     <script>
+        // ============================================
+        // KONFIGURASI APPS SCRIPT
+        // ============================================
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6pqt_1u8V9PxS4ZUTJhZC4qdbqn_366rcWCAqvWEB2p7XkLu7iTKvovSV9Y_nRv_t/exec";
+
         // ============================================
         // FULLSCREEN & ANTI CHEAT
         // ============================================
@@ -482,7 +537,6 @@
         let blurCount = 0;
         let cheatDetected = false;
 
-        // Cek apakah sudah fullscreen
         function checkFullscreen() {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 isFullscreenActive = true;
@@ -492,7 +546,6 @@
             return false;
         }
 
-        // Masuk fullscreen
         function enterFullscreen() {
             const el = document.documentElement;
             if (el.requestFullscreen) {
@@ -507,15 +560,12 @@
             }, 500);
         }
 
-        // Mencegah keluar dari fullscreen dengan ESC
         document.addEventListener('keydown', function(e) {
             if (!isSubmitted && quizData && isFullscreenActive) {
-                // Cegah ESC untuk keluar fullscreen
                 if (e.key === 'Escape') {
                     e.preventDefault();
                     e.stopPropagation();
                     showToast('⚠️ Tidak bisa keluar dari fullscreen sebelum kuis selesai!', false);
-                    // Force fullscreen kembali
                     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                         enterFullscreen();
                     }
@@ -524,14 +574,11 @@
             }
         }, true);
 
-        // Pantau perubahan fullscreen
         document.addEventListener('fullscreenchange', function() {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 if (!isSubmitted && quizData) {
                     isFullscreenActive = false;
-                    // Beri penalti jika belum selesai
                     applyPenalty('Mencoba keluar dari fullscreen');
-                    // Force kembali ke fullscreen
                     setTimeout(() => {
                         if (!isSubmitted) {
                             enterFullscreen();
@@ -545,7 +592,6 @@
             }
         });
 
-        // Fungsi untuk memberi penalti waktu
         function applyPenalty(reason) {
             if (isSubmitted || isPenaltyActive) return;
             
@@ -553,20 +599,16 @@
             isPenaltyActive = true;
             totalPenaltyMinutes++;
             
-            // Kurangi waktu 1 menit (60 detik)
             timeRemaining = Math.max(0, timeRemaining - 60);
             updateTimerDisplay();
             
-            // Tampilkan notifikasi penalti
             const penaltyNotif = document.getElementById('penaltyNotification');
             const penaltyText = document.getElementById('penaltyText');
             penaltyText.textContent = `⏱️ Penalti ${penaltyCount}: Waktu dipotong 1 menit! (${reason})`;
             penaltyNotif.classList.remove('hidden');
             
-            // Timer berkedip merah
             document.getElementById('timerDisplay').classList.add('timer-penalty');
             
-            // Tampilkan toast
             showToast(`⚠️ Penalti! Waktu dipotong 1 menit (${reason})`, false);
             
             setTimeout(() => {
@@ -575,7 +617,6 @@
                 isPenaltyActive = false;
             }, 3000);
             
-            // Jika waktu habis karena penalti
             if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
                 showToast('⏰ Waktu habis karena penalti! Kuis akan dikumpulkan.', false);
@@ -583,7 +624,6 @@
             }
         }
 
-        // Blur/window focus - deteksi siswa keluar dari halaman
         document.addEventListener('visibilitychange', function() {
             if (document.hidden && !isSubmitted && quizData) {
                 blurCount++;
@@ -597,7 +637,6 @@
                     warning.classList.remove('show');
                 }, 3000);
                 
-                // Beri penalti setiap kali keluar halaman
                 applyPenalty(`Keluar dari halaman (${blurCount}x)`);
                 
                 if (blurCount >= 5) {
@@ -607,7 +646,6 @@
             }
         });
 
-        // Cegah klik kanan
         document.addEventListener('contextmenu', function(e) {
             if (!isSubmitted && quizData) {
                 e.preventDefault();
@@ -616,7 +654,6 @@
             }
         });
 
-        // Cegah copy paste
         document.addEventListener('copy', function(e) {
             if (!isSubmitted && quizData) {
                 e.preventDefault();
@@ -633,10 +670,8 @@
             }
         });
 
-        // Cegah keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             if (!isSubmitted && quizData) {
-                // F12, Ctrl+Shift+I, Ctrl+U, Ctrl+Shift+J
                 if (e.key === 'F12' || 
                     (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
                     (e.ctrlKey && e.key === 'u') ||
@@ -646,28 +681,24 @@
                     showToast('❌ Developer tools dinonaktifkan! Penalti -1 menit.', false);
                     return false;
                 }
-                // Ctrl+W (close tab)
                 if (e.ctrlKey && e.key === 'w') {
                     e.preventDefault();
                     applyPenalty('Mencoba menutup tab');
                     showToast('⚠️ Jangan tutup tab! Penalti -1 menit.', false);
                     return false;
                 }
-                // Ctrl+T (new tab)
                 if (e.ctrlKey && e.key === 't') {
                     e.preventDefault();
                     applyPenalty('Membuka tab baru');
                     showToast('⚠️ Tidak bisa membuka tab baru! Penalti -1 menit.', false);
                     return false;
                 }
-                // Ctrl+N (new window)
                 if (e.ctrlKey && e.key === 'n') {
                     e.preventDefault();
                     applyPenalty('Membuka jendela baru');
                     showToast('⚠️ Tidak bisa membuka jendela baru! Penalti -1 menit.', false);
                     return false;
                 }
-                // ESC (sudah ditangani di atas)
                 if (e.key === 'Escape' && isFullscreenActive) {
                     e.preventDefault();
                     showToast('⚠️ Tidak bisa keluar dari fullscreen!', false);
@@ -676,10 +707,8 @@
             }
         });
 
-        // Mencegah keluar fullscreen dengan mengklik area kosong
         document.addEventListener('click', function(e) {
             if (!isSubmitted && quizData && isFullscreenActive) {
-                // Cek apakah ada elemen yang mencoba keluar fullscreen
                 if (e.target.closest('.fullscreen-exit-btn') || 
                     e.target.closest('.fullscreen-exit-override')) {
                     e.preventDefault();
@@ -690,6 +719,87 @@
         });
 
         // ============================================
+        // FUNGSI KIRIM KE GOOGLE SHEETS
+        // ============================================
+        async function sendToGoogleSheets(hasilData) {
+            try {
+                // Siapkan data sesuai format yang diminta Apps Script
+                // Kolom: id, kuis_id, siswa_id, nama_siswa, skor, tanggal_selesai
+                const dataToSend = {
+                    action: 'insertData',
+                    sheetName: 'HasilKuis',
+                    data: {
+                        id: 'HASIL-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                        kuis_id: hasilData.kuisId || 'KUIS-001',
+                        siswa_id: hasilData.nis || '',
+                        nama_siswa: hasilData.name,
+                        skor: hasilData.score,
+                        tanggal_selesai: new Date().toISOString()
+                    }
+                };
+
+                showSendingOverlay('loading', 'Mengirim Hasil Kuis...', 'Mohon tunggu sebentar');
+
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSendingOverlay('success', '✅ Berhasil Tersimpan!', 'Hasil kuis telah disimpan ke Google Sheets');
+                    showToast('✅ Hasil kuis berhasil disimpan ke Google Sheets!');
+                    return true;
+                } else {
+                    throw new Error(result.message || 'Gagal menyimpan data');
+                }
+
+            } catch (error) {
+                console.error('Error sending to Google Sheets:', error);
+                showSendingOverlay('error', '❌ Gagal Menyimpan', 'Error: ' + error.message);
+                showToast('❌ Gagal menyimpan hasil ke Google Sheets: ' + error.message, false);
+                return false;
+            }
+        }
+
+        function showSendingOverlay(type, title, message) {
+            const overlay = document.getElementById('sendingOverlay');
+            const spinner = document.getElementById('sendingSpinner');
+            const icon = document.getElementById('sendingIcon');
+            const titleEl = document.getElementById('sendingTitle');
+            const msgEl = document.getElementById('sendingMessage');
+
+            overlay.classList.add('show');
+
+            if (type === 'loading') {
+                spinner.style.display = 'block';
+                icon.style.display = 'none';
+                titleEl.textContent = title;
+                msgEl.textContent = message;
+            } else if (type === 'success') {
+                spinner.style.display = 'none';
+                icon.style.display = 'block';
+                icon.innerHTML = '<i class="bi bi-check-circle-fill success-icon"></i>';
+                titleEl.textContent = title;
+                msgEl.textContent = message;
+            } else if (type === 'error') {
+                spinner.style.display = 'none';
+                icon.style.display = 'block';
+                icon.innerHTML = '<i class="bi bi-x-circle-fill error-icon"></i>';
+                titleEl.textContent = title;
+                msgEl.textContent = message;
+            }
+        }
+
+        function hideSendingOverlay() {
+            document.getElementById('sendingOverlay').classList.remove('show');
+        }
+
+        // ============================================
         // DATA KUIS
         // ============================================
         let quizData = null;
@@ -698,12 +808,12 @@
         let timeRemaining = 0;
         let isSubmitted = false;
         let hasilQuiz = null;
+        let kuisId = '';
 
         // ============================================
         // INISIALISASI
         // ============================================
         window.onload = function() {
-            // Cek fullscreen
             if (!checkFullscreen()) {
                 document.getElementById('fullscreenWarning').classList.add('show');
             }
@@ -727,6 +837,9 @@
                     showToast('Data kuis kosong! Silakan buat soal terlebih dahulu.', false);
                     return;
                 }
+
+                // Generate kuis_id dari timestamp
+                kuisId = 'KUIS-' + Date.now().toString().slice(-8);
 
                 if (quizData.duration) {
                     timeRemaining = parseInt(quizData.duration) * 60;
@@ -1023,7 +1136,6 @@
             updateQuestionStatus(qId);
         }
 
-        // Fungsi untuk menormalisasi jawaban isian (untuk koreksi)
         function normalizeAnswer(text) {
             if (!text) return '';
             return text
@@ -1034,7 +1146,6 @@
                 .replace(/[ ]{2,}/g, ' ');
         }
 
-        // Fungsi untuk mengecek jawaban isian (tahan typo)
         function checkIsianAnswer(userAnswer, correctAnswers) {
             if (!userAnswer || !correctAnswers) return false;
             
@@ -1137,11 +1248,11 @@
         // ============================================
         // SUBMIT KUIS
         // ============================================
-        function submitQuiz() {
+        async function submitQuiz() {
             if (isSubmitted) return;
 
             const name = document.getElementById('studentName').value.trim();
-            const number = document.getElementById('studentNumber').value.trim();
+            const nis = document.getElementById('studentNIS').value.trim();
 
             if (!name) {
                 showToast('⚠️ Silakan isi Nama Lengkap Anda terlebih dahulu!', false);
@@ -1149,13 +1260,13 @@
                 return;
             }
 
-            if (!number) {
-                showToast('⚠️ Silakan isi Nomor Absen Anda!', false);
-                document.getElementById('studentNumber').focus();
+            if (!nis) {
+                showToast('⚠️ Silakan isi Nomor Induk Siswa (NIS) Anda!', false);
+                document.getElementById('studentNIS').focus();
                 return;
             }
 
-            const historyKey = `quizHistory_${name}_${number}`;
+            const historyKey = `quizHistory_${name}_${nis}`;
             const existingHistory = localStorage.getItem(historyKey);
             if (existingHistory) {
                 showToast('⚠️ Anda sudah pernah mengerjakan kuis ini!', false);
@@ -1165,7 +1276,6 @@
             isSubmitted = true;
             clearInterval(timerInterval);
 
-            // Keluar dari fullscreen setelah selesai
             if (document.fullscreenElement) {
                 document.exitFullscreen().catch(() => {});
             } else if (document.webkitFullscreenElement) {
@@ -1229,7 +1339,8 @@
 
             hasilQuiz = {
                 name,
-                number,
+                nis,
+                kuisId: kuisId,
                 date: new Date().toISOString(),
                 total,
                 correct,
@@ -1244,18 +1355,37 @@
             localStorage.setItem(historyKey, JSON.stringify(hasilQuiz));
             localStorage.setItem('quizHistoryLastKey', historyKey);
 
-            showResultWithCorrection(name, number, total, correct, wrong, score, detailJawaban);
+            // Kirim ke Google Sheets
+            showSendingOverlay('loading', 'Menyimpan Hasil...', 'Mengirim data ke Google Sheets');
+
+            const sendSuccess = await sendToGoogleSheets(hasilQuiz);
+
+            hideSendingOverlay();
+
+            showResultWithCorrection(name, nis, total, correct, wrong, score, detailJawaban, sendSuccess);
             showToast(`🎉 Kuis selesai! Nilai Anda: ${score}`);
         }
 
-        function showResultWithCorrection(name, number, total, correct, wrong, score, detailJawaban) {
+        function showResultWithCorrection(name, nis, total, correct, wrong, score, detailJawaban, sendSuccess) {
             const modal = document.getElementById('resultModal');
             document.getElementById('resultName').textContent = name;
-            document.getElementById('resultNumber').textContent = number || '-';
+            document.getElementById('resultNIS').textContent = nis || '-';
             document.getElementById('resultTotal').textContent = total;
             document.getElementById('resultAnswered').textContent = correct;
             document.getElementById('resultWrong').textContent = wrong;
             document.getElementById('resultScore').textContent = score;
+
+            const statusKirim = document.getElementById('statusKirim');
+            const statusText = document.getElementById('statusKirimText');
+            if (sendSuccess) {
+                statusKirim.classList.remove('hidden');
+                statusText.textContent = '✅ Data berhasil tersimpan di Google Sheets';
+                statusText.style.color = '#16a34a';
+            } else {
+                statusKirim.classList.remove('hidden');
+                statusText.textContent = '⚠️ Data gagal tersimpan di Google Sheets, tetapi sudah tersimpan di lokal';
+                statusText.style.color = '#f59e0b';
+            }
 
             const icon = document.getElementById('resultIcon');
             const title = document.getElementById('resultTitle');
@@ -1462,7 +1592,7 @@
         }
 
         // ============================================
-        // SHOW PDF PREVIEW
+        // SHOW PDF PREVIEW - DENGAN KUNCI JAWABAN
         // ============================================
         function showPDFPreview() {
             if (!hasilQuiz) {
@@ -1487,11 +1617,12 @@
                         <h2 style="font-size: 18px; font-weight: 800; color: #0f766e; margin: 0;">LAPORAN HASIL KUIS</h2>
                         <p style="font-size: 12px; color: #64748b; margin: 2px 0;">SDN 3 Ngantru</p>
                         <p style="font-size: 11px; color: #94a3b8; margin: 2px 0;">${new Date(h.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                        <p style="font-size: 10px; color: #94a3b8; margin: 2px 0;">Kuis ID: ${h.kuisId || '-'}</p>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; margin-bottom: 12px;">
                         <div><span style="color: #64748b;">Nama:</span> <strong>${h.name}</strong></div>
-                        <div><span style="color: #64748b;">No. Absen:</span> <strong>${h.number}</strong></div>
+                        <div><span style="color: #64748b;">NIS:</span> <strong>${h.nis || '-'}</strong></div>
                         <div><span style="color: #64748b;">Total Soal:</span> <strong>${h.total}</strong></div>
                         <div><span style="color: #64748b;">Benar/Salah:</span> <strong style="color: #16a34a;">${h.correct}</strong> / <strong style="color: #dc2626;">${h.wrong}</strong></div>
                         ${h.totalPenalty > 0 ? `
@@ -1517,7 +1648,7 @@
 
                     <hr style="border: 1px dashed #e2e8f0; margin: 12px 0;">
 
-                    <h4 style="font-size: 13px; font-weight: 700; color: #0f766e; margin: 0 0 10px 0;">📝 DETAIL JAWABAN</h4>
+                    <h4 style="font-size: 13px; font-weight: 700; color: #0f766e; margin: 0 0 10px 0;">📝 DETAIL JAWABAN & KUNCI JAWABAN</h4>
             `;
 
             h.detailJawaban.forEach((item, index) => {
@@ -1542,17 +1673,55 @@
                         <p style="font-size: 10px; margin: 4px 0; color: #1e293b;">${item.pertanyaan}</p>
                         <div style="font-size: 10px; color: #64748b;">
                             <div>Jawaban Anda: <strong>${userAns || '(Tidak dijawab)'}</strong></div>
+                            <!-- KUNCI JAWABAN -->
+                            <div class="kunci-jawaban-box">
+                                <strong>🔑 Kunci Jawaban:</strong> ${item.jawabanBenar}
+                            </div>
                             ${!item.isBenar ? `
-                                <div class="jawaban-benar-display">
-                                    ✅ Jawaban Benar: <strong>${item.jawabanBenar}</strong>
+                                <div style="color: #dc2626; font-size: 10px; margin-top: 2px;">
+                                    <i class="bi bi-x-circle-fill"></i> Jawaban Anda salah
                                 </div>
-                            ` : ''}
+                            ` : `
+                                <div style="color: #16a34a; font-size: 10px; margin-top: 2px;">
+                                    <i class="bi bi-check-circle-fill"></i> Jawaban Anda benar
+                                </div>
+                            `}
                         </div>
                     </div>
                 `;
             });
 
+            // Ringkasan Kunci Jawaban
             html += `
+                    <hr style="border: 1px dashed #e2e8f0; margin: 12px 0;">
+                    <h4 style="font-size: 12px; font-weight: 700; color: #b45309; margin: 0 0 8px 0;">📋 RINGKASAN KUNCI JAWABAN</h4>
+                    <div style="background: #fef3c7; border-radius: 8px; padding: 10px; font-size: 10px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #f59e0b;">
+                                    <th style="text-align: left; padding: 4px;">No.</th>
+                                    <th style="text-align: left; padding: 4px;">Kunci Jawaban</th>
+                                    <th style="text-align: left; padding: 4px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            h.detailJawaban.forEach((item, index) => {
+                const status = item.isBenar ? '✅' : '❌';
+                html += `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 4px;">${index + 1}</td>
+                        <td style="padding: 4px; font-weight: 600; color: #b45309;">${item.jawabanBenar}</td>
+                        <td style="padding: 4px; color: ${item.isBenar ? '#16a34a' : '#dc2626'};">${status}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
                     <div style="text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px;">
                         Dicetak dari Kuis Siswa - SDN 3 Ngantru
                     </div>
@@ -1563,7 +1732,7 @@
         }
 
         // ============================================
-        // DOWNLOAD PDF
+        // DOWNLOAD PDF - DENGAN KUNCI JAWABAN
         // ============================================
         function downloadPDF() {
             if (!hasilQuiz) {
@@ -1595,6 +1764,23 @@
                 y += 2;
             }
 
+            function addBoldText(text, size = 11, x = margin) {
+                doc.setFontSize(size);
+                doc.setFont('helvetica', 'bold');
+                const lines = doc.splitTextToSize(text, pageWidth - margin * 2);
+                const lineHeight = size * 0.4;
+                
+                lines.forEach(line => {
+                    if (y + lineHeight > pageHeight - margin) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    doc.text(line, x, y);
+                    y += lineHeight + 1;
+                });
+                y += 2;
+            }
+
             // Header
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
@@ -1608,6 +1794,8 @@
             doc.text('SDN 3 Ngantru', pageWidth / 2, y, { align: 'center' });
             y += 6;
             doc.text(`Tanggal: ${new Date(hasilQuiz.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`, pageWidth / 2, y, { align: 'center' });
+            y += 6;
+            doc.text(`Kuis ID: ${hasilQuiz.kuisId || '-'}`, pageWidth / 2, y, { align: 'center' });
             y += 8;
 
             doc.setDrawColor(200);
@@ -1623,7 +1811,7 @@
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             addText(`Nama: ${hasilQuiz.name}`, 10);
-            addText(`Nomor Absen: ${hasilQuiz.number}`, 10);
+            addText(`NIS: ${hasilQuiz.nis || '-'}`, 10);
             
             y += 2;
             addText(`Total Soal: ${hasilQuiz.total}`, 10);
@@ -1660,18 +1848,18 @@
             doc.line(margin, y, pageWidth - margin, y);
             y += 8;
 
-            // Detail Jawaban
+            // Detail Jawaban dengan Kunci
             doc.setFontSize(13);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(15, 118, 110);
-            doc.text('📝 DETAIL JAWABAN', margin, y);
+            doc.text('📝 DETAIL JAWABAN & KUNCI JAWABAN', margin, y);
             y += 6;
 
             hasilQuiz.detailJawaban.forEach((item, index) => {
                 const soalNum = index + 1;
                 const status = item.isBenar ? '✅ Benar' : '❌ Salah';
                 
-                if (y > pageHeight - 50) {
+                if (y > pageHeight - 60) {
                     doc.addPage();
                     y = margin;
                 }
@@ -1703,11 +1891,12 @@
                 doc.text(`Jawaban Anda: ${userAns || '(Tidak dijawab)'}`, margin + 3, y);
                 y += 5;
                 
-                if (!item.isBenar) {
-                    doc.setTextColor(34, 197, 94);
-                    doc.text(`✅ Jawaban Benar: ${item.jawabanBenar}`, margin + 3, y);
-                    y += 5;
-                }
+                // KUNCI JAWABAN dengan latar kuning
+                doc.setTextColor(180, 83, 9);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`🔑 Kunci Jawaban: ${item.jawabanBenar}`, margin + 3, y);
+                doc.setFont('helvetica', 'normal');
+                y += 5;
                 
                 doc.setTextColor(100, 116, 139);
                 doc.text(`Status: ${status}`, margin + 3, y);
@@ -1720,6 +1909,59 @@
                 }
             });
 
+            // Ringkasan Kunci Jawaban di halaman terakhir
+            doc.addPage();
+            y = margin;
+            
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(180, 83, 9);
+            doc.text('📋 RINGKASAN KUNCI JAWABAN', pageWidth / 2, y, { align: 'center' });
+            y += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(30, 41, 59);
+            
+            // Buat tabel ringkasan
+            const tableData = hasilQuiz.detailJawaban.map((item, index) => [
+                (index + 1).toString(),
+                item.jawabanBenar,
+                item.isBenar ? '✅ Benar' : '❌ Salah'
+            ]);
+            
+            // Header tabel
+            const colWidths = [20, 60, 40];
+            const headers = ['No.', 'Kunci Jawaban', 'Status'];
+            
+            // Header
+            doc.setFont('helvetica', 'bold');
+            let x = margin;
+            headers.forEach((header, i) => {
+                doc.text(header, x + 2, y);
+                x += colWidths[i];
+            });
+            y += 6;
+            doc.setDrawColor(200);
+            doc.line(margin, y - 2, pageWidth - margin, y - 2);
+            
+            // Data
+            doc.setFont('helvetica', 'normal');
+            tableData.forEach(row => {
+                x = margin;
+                row.forEach((cell, i) => {
+                    doc.text(cell, x + 2, y);
+                    x += colWidths[i];
+                });
+                y += 5;
+                
+                if (y > pageHeight - 20) {
+                    doc.addPage();
+                    y = margin;
+                }
+            });
+
+            // Footer semua halaman
             const totalPages = doc.internal.getNumberOfPages();
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
@@ -1734,9 +1976,9 @@
                 );
             }
 
-            doc.save(`Hasil_Kuis_${hasilQuiz.name}_${hasilQuiz.number}.pdf`);
+            doc.save(`Hasil_Kuis_${hasilQuiz.name}_${hasilQuiz.nis}.pdf`);
             closePDFPreview();
-            showToast('📄 PDF berhasil diunduh!');
+            showToast('📄 PDF berhasil diunduh! (dengan Kunci Jawaban)');
         }
 
         // ============================================
