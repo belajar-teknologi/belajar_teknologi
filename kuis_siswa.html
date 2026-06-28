@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kuis Siswa - SDN 3 Ngantru</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- jsPDF untuk PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        teal: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        orange: {
+                            50: '#fff7ed',
+                            500: '#f97316',
+                            600: '#ea580c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .touch-target {
+            min-height: 48px;
+        }
+        .option-card {
+            transition: all 0.2s ease;
+        }
+        .option-card:active {
+            transform: scale(0.97);
+        }
+        .option-card.selected {
+            border-color: #0f766e;
+            background-color: #f0fdfa;
+        }
+        .option-card.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .option-card.wrong {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .option-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .timer-warning {
+            animation: pulse-red 1s ease-in-out infinite;
+        }
+        .timer-penalty {
+            animation: pulse-red 0.5s ease-in-out infinite;
+        }
+        @keyframes pulse-red {
+            0%, 100% { color: #dc2626; }
+            50% { color: #ef4444; }
+        }
+        /* Style untuk preview PDF */
+        .pdf-preview-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .pdf-preview-container .pdf-page {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            page-break-after: always;
+        }
+        .pdf-preview-container .stempel-nilai {
+            position: relative;
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 28px;
+            color: white;
+            text-align: center;
+            margin: 10px auto;
+            transform: rotate(-5deg);
+        }
+        .pdf-preview-container .stempel-nilai.sangat-bagus {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+        }
+        .pdf-preview-container .stempel-nilai.bagus {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .pdf-preview-container .stempel-nilai.cukup {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+        }
+        .pdf-preview-container .stempel-nilai.kurang {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .pdf-preview-container .jawaban-benar-display {
+            background: #dcfce7;
+            border-left: 4px solid #22c55e;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .pdf-preview-container .jawaban-salah-display {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        /* Fullscreen overlay warning */
+        #fullscreenWarning {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        #fullscreenWarning.show {
+            display: flex;
+        }
+        #fullscreenWarning .warning-box {
+            background: #1e293b;
+            padding: 30px 24px;
+            border-radius: 20px;
+            max-width: 400px;
+            border: 2px solid #f97316;
+        }
+        #fullscreenWarning .warning-box i {
+            font-size: 48px;
+            color: #f97316;
+        }
+        #fullscreenWarning .warning-box h2 {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 12px 0 8px;
+        }
+        #fullscreenWarning .warning-box p {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        #fullscreenWarning .warning-box button {
+            margin-top: 16px;
+            padding: 10px 32px;
+            background: #f97316;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #fullscreenWarning .warning-box button:hover {
+            background: #ea580c;
+        }
+        /* Peringatan keluar tab */
+        #exitWarning {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #dc2626;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 99998;
+            box-shadow: 0 4px 12px rgba(220,38,38,0.4);
+            animation: slideUp 0.3s ease;
+        }
+        #exitWarning.show {
+            display: block;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        /* Sembunyikan tombol close di modal preview */
+        .btn-close-hidden {
+            display: none !important;
+        }
+        /* Status kecurangan */
+        .cheat-detected {
+            background: #dc2626 !important;
+            color: white !important;
+            animation: pulse-red 0.5s ease-in-out infinite;
+        }
+        .cheat-warning {
+            background: #f59e0b !important;
+            color: white !important;
+        }
+        /* Sembunyikan pointer fullscreen exit */
+        .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        /* Sembunyikan elemen fullscreen default browser */
+        :-webkit-full-screen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        :-moz-full-screen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        :-ms-fullscreen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        :fullscreen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        /* Mencegah keluar fullscreen dengan ESC */
+        .prevent-esc {
+            cursor: default;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen max-w-[480px] mx-auto shadow-2xl relative">
+
+    <!-- FULLSCREEN WARNING -->
+    <div id="fullscreenWarning">
+        <div class="warning-box">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <h2>⚠️ Mode Kuis Aktif</h2>
+            <p>Kuis harus dikerjakan dalam mode <strong>Fullscreen</strong> untuk mencegah kecurangan.</p>
+            <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Tekan tombol di bawah untuk masuk mode fullscreen.</p>
+            <button onclick="enterFullscreen()">
+                <i class="bi bi-arrows-fullscreen"></i> Masuk Fullscreen
+            </button>
+        </div>
+    </div>
+
+    <!-- EXIT WARNING -->
+    <div id="exitWarning">
+        <i class="bi bi-exclamation-circle-fill mr-2"></i>
+        ⚠️ Jangan keluar dari halaman kuis! Waktu akan dipotong 1 menit.
+    </div>
+
+    <!-- PENALTY NOTIFICATION -->
+    <div id="penaltyNotification" class="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] bg-red-600 text-white px-6 py-3 rounded-2xl shadow-2xl text-center font-bold text-sm hidden">
+        <i class="bi bi-clock-history text-xl mr-2"></i>
+        <span id="penaltyText">⏱️ Waktu dipotong 1 menit karena terdeteksi kecurangan!</span>
+    </div>
+
+    <!-- HEADER -->
+    <header class="bg-teal-700 text-white px-4 py-3.5 sticky top-0 z-50 shadow-md no-print">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-white/10 p-2 rounded-xl">
+                    <i class="bi bi-pencil-square text-xl text-orange-500"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-tight leading-tight">Kuis Siswa</h1>
+                    <p class="text-[10px] text-teal-100 font-medium">SDN 3 Ngantru</p>
+                </div>
+            </div>
+            <div id="timerDisplay" class="bg-white/10 px-3 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5">
+                <i class="bi bi-clock-history text-orange-400"></i>
+                <span id="timerText">--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 p-4 space-y-4 pb-28" id="mainContent">
+        
+        <!-- STATUS INFO -->
+        <div id="statusBanner" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3 no-print">
+            <div class="bg-teal-50 p-2.5 rounded-xl">
+                <i class="bi bi-info-circle-fill text-teal-700 text-lg"></i>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-700" id="statusTitle">Memuat Kuis...</p>
+                <p class="text-[10px] text-slate-400" id="statusSubtitle">Mohon tunggu sebentar</p>
+            </div>
+        </div>
+
+        <!-- IDENTITAS SISWA -->
+        <section class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3 no-print" id="identitySection">
+            <div class="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                <i class="bi bi-person-vcard text-teal-700 text-lg"></i>
+                <h2 class="font-bold text-slate-900 text-sm">Identitas Diri</h2>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nama Lengkap:</label>
+                    <input type="text" id="studentName" placeholder="Tulis nama lengkap Anda..." class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:bg-white outline-none transition-all font-medium touch-target">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nomor Absen:</label>
+                    <input type="number" id="studentNumber" placeholder="Contoh: 12" class="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 focus:bg-white outline-none transition-all font-medium touch-target">
+                </div>
+            </div>
+        </section>
+
+        <!-- SOAL-SOAL KUIS -->
+        <section id="questionsContainer" class="space-y-4">
+            <!-- Soal akan dirender di sini -->
+        </section>
+
+        <!-- TOMBOL KUMPULKAN -->
+        <div class="pt-2 text-center no-print">
+            <button id="submitBtn" onclick="submitQuiz()" class="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all text-white font-extrabold text-xs py-3.5 rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 touch-target">
+                <i class="bi bi-send-check-fill text-sm"></i> Kumpulkan Jawaban
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER INFO -->
+    <footer class="bg-white border-t border-slate-100 p-4 fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto z-40 rounded-t-3xl shadow-2xl no-print">
+        <div class="flex items-center justify-between text-xs text-slate-500">
+            <div>
+                <span class="font-bold" id="progressText">0 / 0</span>
+                <span class="text-[10px]"> soal terjawab</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-[10px]"><i class="bi bi-clock text-teal-600"></i> <span id="remainingTime">--</span></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL HASIL -->
+    <div id="resultModal" class="fixed inset-0 bg-black/50 z-[999] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-[420px] space-y-4 shadow-2xl animate-[fadeIn_0.3s_ease] max-h-[95vh] overflow-y-auto">
+            <div class="text-center">
+                <div id="resultIcon" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="bi bi-check-circle-fill text-5xl text-emerald-500"></i>
+                </div>
+                <h3 class="font-extrabold text-lg text-slate-900" id="resultTitle">Kuis Selesai!</h3>
+                <p class="text-xs text-slate-500 mt-1" id="resultSubtitle">Terima kasih telah mengerjakan kuis.</p>
+            </div>
+            
+            <div class="bg-slate-50 rounded-2xl p-4 space-y-2">
+                <div class="flex justify-between text-xs">
+                    <span class="text-slate-500">Nama:</span>
+                    <span class="font-bold text-slate-800" id="resultName">-</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                    <span class="text-slate-500">Nomor Absen:</span>
+                    <span class="font-bold text-slate-800" id="resultNumber">-</span>
+                </div>
+                <div class="flex justify-between text-xs border-t border-slate-200 pt-2">
+                    <span class="text-slate-500">Total Soal:</span>
+                    <span class="font-bold text-slate-800" id="resultTotal">0</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                    <span class="text-slate-500">Benar:</span>
+                    <span class="font-bold text-emerald-600" id="resultAnswered">0</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                    <span class="text-slate-500">Salah:</span>
+                    <span class="font-bold text-red-600" id="resultWrong">0</span>
+                </div>
+                <div class="flex justify-between text-xs border-t border-slate-200 pt-2">
+                    <span class="text-slate-500 font-bold">Nilai Akhir:</span>
+                    <span class="font-extrabold text-2xl text-teal-700" id="resultScore">0</span>
+                </div>
+            </div>
+
+            <!-- Tombol Preview PDF -->
+            <button onclick="showPDFPreview()" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs py-3 rounded-xl active:scale-95 transition-all touch-target flex items-center justify-center gap-2">
+                <i class="bi bi-eye-fill"></i> Preview & Unduh PDF
+            </button>
+
+            <div class="space-y-2 mt-2">
+                <button onclick="closeResult()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-3 rounded-xl active:scale-95 transition-all touch-target">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PREVIEW PDF -->
+    <div id="pdfPreviewModal" class="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-4 w-full max-w-[500px] max-h-[95vh] shadow-2xl animate-[fadeIn_0.3s_ease] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
+                <h4 class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                    <i class="bi bi-file-pdf text-red-500"></i> Preview PDF
+                </h4>
+                <!-- Tombol X dihilangkan -->
+            </div>
+            
+            <div class="pdf-preview-container flex-1" id="pdfPreviewContent">
+                <!-- Konten preview akan diisi oleh JS -->
+            </div>
+
+            <div class="flex gap-2 mt-3 pt-3 border-t border-slate-200">
+                <button onclick="closePDFPreview()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 rounded-xl active:scale-95 transition-all">
+                    Tutup
+                </button>
+                <button onclick="downloadPDF()" class="flex-1 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs py-2.5 rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="bi bi-download"></i> Unduh PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="customToast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 no-print">
+        <i id="toast_icon" class="bi bi-info-circle-fill text-teal-400"></i>
+        <span id="toast_text">Pesan...</span>
+    </div>
+
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Sembunyikan elemen fullscreen exit dari browser */
+        ::-webkit-full-screen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        ::-moz-full-screen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        ::-ms-fullscreen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        :fullscreen .fullscreen-exit-hidden {
+            display: none !important;
+        }
+        /* Sembunyikan tombol fullscreen exit di mobile */
+        .fullscreen-exit-btn {
+            display: none !important;
+        }
+        /* Browser fullscreen exit button override */
+        .fullscreen-exit-override {
+            display: none !important;
+        }
+    </style>
+
+    <script>
+        // ============================================
+        // FULLSCREEN & ANTI CHEAT
+        // ============================================
+        let isFullscreenActive = false;
+        let fullscreenWarningShown = false;
+        let penaltyCount = 0;
+        let isPenaltyActive = false;
+        let totalPenaltyMinutes = 0;
+        let blurCount = 0;
+        let cheatDetected = false;
+
+        // Cek apakah sudah fullscreen
+        function checkFullscreen() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                isFullscreenActive = true;
+                document.getElementById('fullscreenWarning').classList.remove('show');
+                return true;
+            }
+            return false;
+        }
+
+        // Masuk fullscreen
+        function enterFullscreen() {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(() => {});
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            }
+            setTimeout(() => {
+                if (checkFullscreen()) {
+                    showToast('✅ Mode fullscreen aktif');
+                }
+            }, 500);
+        }
+
+        // Mencegah keluar dari fullscreen dengan ESC
+        document.addEventListener('keydown', function(e) {
+            if (!isSubmitted && quizData && isFullscreenActive) {
+                // Cegah ESC untuk keluar fullscreen
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showToast('⚠️ Tidak bisa keluar dari fullscreen sebelum kuis selesai!', false);
+                    // Force fullscreen kembali
+                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                        enterFullscreen();
+                    }
+                    return false;
+                }
+            }
+        }, true);
+
+        // Pantau perubahan fullscreen
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (!isSubmitted && quizData) {
+                    isFullscreenActive = false;
+                    // Beri penalti jika belum selesai
+                    applyPenalty('Mencoba keluar dari fullscreen');
+                    // Force kembali ke fullscreen
+                    setTimeout(() => {
+                        if (!isSubmitted) {
+                            enterFullscreen();
+                            document.getElementById('fullscreenWarning').classList.add('show');
+                        }
+                    }, 500);
+                }
+            } else {
+                isFullscreenActive = true;
+                document.getElementById('fullscreenWarning').classList.remove('show');
+            }
+        });
+
+        // Fungsi untuk memberi penalti waktu
+        function applyPenalty(reason) {
+            if (isSubmitted || isPenaltyActive) return;
+            
+            penaltyCount++;
+            isPenaltyActive = true;
+            totalPenaltyMinutes++;
+            
+            // Kurangi waktu 1 menit (60 detik)
+            timeRemaining = Math.max(0, timeRemaining - 60);
+            updateTimerDisplay();
+            
+            // Tampilkan notifikasi penalti
+            const penaltyNotif = document.getElementById('penaltyNotification');
+            const penaltyText = document.getElementById('penaltyText');
+            penaltyText.textContent = `⏱️ Penalti ${penaltyCount}: Waktu dipotong 1 menit! (${reason})`;
+            penaltyNotif.classList.remove('hidden');
+            
+            // Timer berkedip merah
+            document.getElementById('timerDisplay').classList.add('timer-penalty');
+            
+            // Tampilkan toast
+            showToast(`⚠️ Penalti! Waktu dipotong 1 menit (${reason})`, false);
+            
+            setTimeout(() => {
+                penaltyNotif.classList.add('hidden');
+                document.getElementById('timerDisplay').classList.remove('timer-penalty');
+                isPenaltyActive = false;
+            }, 3000);
+            
+            // Jika waktu habis karena penalti
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                showToast('⏰ Waktu habis karena penalti! Kuis akan dikumpulkan.', false);
+                setTimeout(() => submitQuiz(), 1500);
+            }
+        }
+
+        // Blur/window focus - deteksi siswa keluar dari halaman
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && !isSubmitted && quizData) {
+                blurCount++;
+                const warning = document.getElementById('exitWarning');
+                warning.classList.add('show');
+                warning.innerHTML = `
+                    <i class="bi bi-exclamation-circle-fill mr-2"></i>
+                    ⚠️ Peringatan ${blurCount}: Jangan keluar dari halaman kuis!
+                `;
+                setTimeout(() => {
+                    warning.classList.remove('show');
+                }, 3000);
+                
+                // Beri penalti setiap kali keluar halaman
+                applyPenalty(`Keluar dari halaman (${blurCount}x)`);
+                
+                if (blurCount >= 5) {
+                    cheatDetected = true;
+                    showToast('🚨 Kecurangan terdeteksi! Waktu terus dipotong!', false);
+                }
+            }
+        });
+
+        // Cegah klik kanan
+        document.addEventListener('contextmenu', function(e) {
+            if (!isSubmitted && quizData) {
+                e.preventDefault();
+                applyPenalty('Klik kanan');
+                showToast('❌ Klik kanan dinonaktifkan! Penalti -1 menit.', false);
+            }
+        });
+
+        // Cegah copy paste
+        document.addEventListener('copy', function(e) {
+            if (!isSubmitted && quizData) {
+                e.preventDefault();
+                applyPenalty('Copy');
+                showToast('❌ Copy-paste dinonaktifkan! Penalti -1 menit.', false);
+            }
+        });
+
+        document.addEventListener('paste', function(e) {
+            if (!isSubmitted && quizData) {
+                e.preventDefault();
+                applyPenalty('Paste');
+                showToast('❌ Copy-paste dinonaktifkan! Penalti -1 menit.', false);
+            }
+        });
+
+        // Cegah keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (!isSubmitted && quizData) {
+                // F12, Ctrl+Shift+I, Ctrl+U, Ctrl+Shift+J
+                if (e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                    (e.ctrlKey && e.key === 'u') ||
+                    (e.ctrlKey && e.key === 'U')) {
+                    e.preventDefault();
+                    applyPenalty('Membuka Developer Tools');
+                    showToast('❌ Developer tools dinonaktifkan! Penalti -1 menit.', false);
+                    return false;
+                }
+                // Ctrl+W (close tab)
+                if (e.ctrlKey && e.key === 'w') {
+                    e.preventDefault();
+                    applyPenalty('Mencoba menutup tab');
+                    showToast('⚠️ Jangan tutup tab! Penalti -1 menit.', false);
+                    return false;
+                }
+                // Ctrl+T (new tab)
+                if (e.ctrlKey && e.key === 't') {
+                    e.preventDefault();
+                    applyPenalty('Membuka tab baru');
+                    showToast('⚠️ Tidak bisa membuka tab baru! Penalti -1 menit.', false);
+                    return false;
+                }
+                // Ctrl+N (new window)
+                if (e.ctrlKey && e.key === 'n') {
+                    e.preventDefault();
+                    applyPenalty('Membuka jendela baru');
+                    showToast('⚠️ Tidak bisa membuka jendela baru! Penalti -1 menit.', false);
+                    return false;
+                }
+                // ESC (sudah ditangani di atas)
+                if (e.key === 'Escape' && isFullscreenActive) {
+                    e.preventDefault();
+                    showToast('⚠️ Tidak bisa keluar dari fullscreen!', false);
+                    return false;
+                }
+            }
+        });
+
+        // Mencegah keluar fullscreen dengan mengklik area kosong
+        document.addEventListener('click', function(e) {
+            if (!isSubmitted && quizData && isFullscreenActive) {
+                // Cek apakah ada elemen yang mencoba keluar fullscreen
+                if (e.target.closest('.fullscreen-exit-btn') || 
+                    e.target.closest('.fullscreen-exit-override')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showToast('⚠️ Tidak bisa keluar dari fullscreen!', false);
+                }
+            }
+        });
+
+        // ============================================
+        // DATA KUIS
+        // ============================================
+        let quizData = null;
+        let userAnswers = {};
+        let timerInterval = null;
+        let timeRemaining = 0;
+        let isSubmitted = false;
+        let hasilQuiz = null;
+
+        // ============================================
+        // INISIALISASI
+        // ============================================
+        window.onload = function() {
+            // Cek fullscreen
+            if (!checkFullscreen()) {
+                document.getElementById('fullscreenWarning').classList.add('show');
+            }
+            loadQuizData();
+        };
+
+        function loadQuizData() {
+            const storedData = localStorage.getItem('quizData');
+            
+            if (!storedData) {
+                showToast('Tidak ada data kuis. Silakan buat kuis terlebih dahulu di Pembuat Soal!', false);
+                document.getElementById('statusTitle').textContent = '⚠️ Tidak Ada Kuis';
+                document.getElementById('statusSubtitle').textContent = 'Silakan buat kuis di Pembuat Soal terlebih dahulu.';
+                return;
+            }
+
+            try {
+                quizData = JSON.parse(storedData);
+                
+                if (!quizData.questions || quizData.questions.length === 0) {
+                    showToast('Data kuis kosong! Silakan buat soal terlebih dahulu.', false);
+                    return;
+                }
+
+                if (quizData.duration) {
+                    timeRemaining = parseInt(quizData.duration) * 60;
+                } else {
+                    timeRemaining = 15 * 60;
+                }
+
+                renderQuestions(quizData.questions);
+                updateProgress();
+                startTimer();
+                
+                document.getElementById('statusTitle').textContent = `📝 Kuis Siap! (${quizData.questions.length} Soal)`;
+                document.getElementById('statusSubtitle').textContent = 'Baca setiap soal dengan teliti sebelum menjawab.';
+
+            } catch (e) {
+                console.error('Error loading quiz data:', e);
+                showToast('Gagal memuat data kuis. Format data tidak valid.', false);
+            }
+        }
+
+        // ============================================
+        // RENDER SOAL
+        // ============================================
+        function renderQuestions(questions, showCorrect = false) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            questions.forEach((q, index) => {
+                const questionNumber = index + 1;
+                let optionsHtml = '';
+                const userAnswer = userAnswers[q.id];
+                const correctAnswer = q.jawaban;
+
+                if (q.tipe === 'PG' || q.tipe === 'PGK') {
+                    const options = ['A', 'B', 'C', 'D'];
+                    const isPGK = q.tipe === 'PGK';
+                    const selectedValues = userAnswer || [];
+
+                    optionsHtml = `
+                        <div class="space-y-2 mt-2">
+                            ${options.map(opt => {
+                                const optText = q[`pilihan${opt}`];
+                                if (!optText) return '';
+                                let isSelected = false;
+                                let isCorrect = false;
+                                let isWrong = false;
+
+                                if (showCorrect) {
+                                    if (isPGK) {
+                                        const correctArr = correctAnswer.split(';').map(s => s.trim());
+                                        isCorrect = correctArr.includes(opt);
+                                        isSelected = selectedValues.includes(opt);
+                                        isWrong = isSelected && !isCorrect;
+                                    } else {
+                                        isCorrect = opt === correctAnswer;
+                                        isSelected = selectedValues === opt;
+                                        isWrong = isSelected && !isCorrect;
+                                    }
+                                } else {
+                                    isSelected = isPGK ? selectedValues.includes(opt) : selectedValues === opt;
+                                }
+
+                                let classes = 'option-card w-full text-left px-4 py-3 rounded-xl border-2 bg-white hover:border-teal-300 transition-all touch-target flex items-center gap-3';
+                                if (showCorrect) {
+                                    if (isCorrect) classes += ' correct';
+                                    if (isWrong) classes += ' wrong';
+                                    if (isSelected && isCorrect) classes += ' selected';
+                                } else {
+                                    if (isSelected) classes += ' selected border-teal-500';
+                                    else classes += ' border-slate-200';
+                                }
+                                if (isSubmitted) classes += ' disabled';
+
+                                return `
+                                    <button onclick="selectOption(${q.id}, '${opt}', '${q.tipe}')" 
+                                        class="${classes}"
+                                        ${isSubmitted ? 'disabled' : ''}>
+                                        <span class="w-6 h-6 rounded-full ${isSelected ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center text-xs font-bold flex-shrink-0">${opt}</span>
+                                        <span class="text-xs text-slate-700">${optText}</span>
+                                        ${showCorrect && isCorrect ? '<i class="bi bi-check-circle-fill text-emerald-500 ml-auto"></i>' : ''}
+                                        ${showCorrect && isWrong ? '<i class="bi bi-x-circle-fill text-red-500 ml-auto"></i>' : ''}
+                                    </button>
+                                `;
+                            }).filter(html => html).join('')}
+                        </div>
+                    `;
+                } else if (q.tipe === 'MENJODOHKAN') {
+                    const pairs = ['A', 'B', 'C'];
+                    const selectedMap = userAnswer || {};
+                    const rightOptions = ['A', 'B', 'C', 'D'];
+                    const rightLabels = rightOptions.map(opt => ({
+                        label: opt,
+                        text: q[`pilihan${opt}`] || ''
+                    })).filter(item => item.text);
+
+                    const correctMap = correctAnswer.split(';').map(s => s.trim());
+                    const kiriList = q.kiri || ['', '', ''];
+
+                    optionsHtml = `
+                        <div class="space-y-3 mt-2">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-bold text-teal-700">⬅️ Sisi Kiri</p>
+                                    ${kiriList.map((leftText, idx) => {
+                                        const pairKey = pairs[idx];
+                                        const currentVal = selectedMap[pairKey] || '';
+                                        const isCorrect = showCorrect && correctMap[idx] === currentVal;
+                                        const isWrong = showCorrect && currentVal && correctMap[idx] !== currentVal;
+
+                                        return `
+                                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                                <span class="text-xs font-medium text-slate-700">${leftText || `(Kosong ${idx+1})`}</span>
+                                                ${showCorrect ? `
+                                                    <span class="text-[9px] ${isCorrect ? 'text-emerald-600' : isWrong ? 'text-red-600' : 'text-slate-400'} ml-1">
+                                                        ${isCorrect ? '✓' : isWrong ? '✗' : '•'}
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-bold text-orange-600">Sisi Kanan ➡️</p>
+                                    ${kiriList.map((leftText, idx) => {
+                                        const pairKey = pairs[idx];
+                                        const currentVal = selectedMap[pairKey] || '';
+                                        const isCorrect = showCorrect && correctMap[idx] === currentVal;
+                                        const isWrong = showCorrect && currentVal && correctMap[idx] !== currentVal;
+
+                                        let borderClass = 'border-slate-200';
+                                        if (showCorrect && currentVal) {
+                                            borderClass = isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-red-500 bg-red-50';
+                                        } else if (currentVal) {
+                                            borderClass = 'border-teal-500 bg-teal-50';
+                                        }
+
+                                        return `
+                                            <div class="bg-white p-1.5 rounded-xl border-2 ${borderClass}">
+                                                <select onchange="selectMatching(${q.id}, '${pairKey}', this.value)" 
+                                                    class="w-full text-xs font-medium bg-transparent outline-none touch-target py-1"
+                                                    ${isSubmitted ? 'disabled' : ''}>
+                                                    <option value="">-- Pilih --</option>
+                                                    ${rightLabels.map(r => `
+                                                        <option value="${r.label}" ${currentVal === r.label ? 'selected' : ''}>
+                                                            ${r.label}. ${r.text}
+                                                            ${showCorrect && r.label === correctMap[idx] ? ' ✅' : ''}
+                                                        </option>
+                                                    `).join('')}
+                                                </select>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            ${showCorrect ? `
+                                <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg">
+                                    <span class="font-bold">Jawaban benar:</span> ${correctMap.map((val, idx) => `${pairs[idx]} → ${val}`).join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else if (q.tipe === 'ISIAN') {
+                    const currentValue = userAnswer || '';
+                    const isCorrect = showCorrect && currentValue.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+                    const isWrong = showCorrect && currentValue && !isCorrect;
+
+                    let inputClass = 'w-full px-4 py-3 text-xs bg-slate-50 border-2 rounded-xl focus:border-teal-500 focus:bg-white outline-none transition-all font-medium touch-target';
+                    if (showCorrect && currentValue) {
+                        inputClass += isCorrect ? ' border-emerald-500 bg-emerald-50' : ' border-red-500 bg-red-50';
+                    } else if (currentValue) {
+                        inputClass += ' border-teal-500 bg-teal-50';
+                    } else {
+                        inputClass += ' border-slate-200';
+                    }
+
+                    optionsHtml = `
+                        <div class="mt-2">
+                            <input type="text" 
+                                id="input_${q.id}" 
+                                value="${currentValue}" 
+                                oninput="selectIsian(${q.id}, this.value)" 
+                                placeholder="Tulis jawaban Anda di sini..." 
+                                class="${inputClass}"
+                                ${isSubmitted ? 'disabled' : ''}>
+                            ${showCorrect ? `
+                                <div class="text-[10px] mt-1 ${isCorrect ? 'text-emerald-600' : isWrong ? 'text-red-600' : 'text-slate-500'}">
+                                    <span class="font-bold">Jawaban benar:</span> ${correctAnswer}
+                                    ${isCorrect ? ' ✅' : isWrong ? ' ❌' : ''}
+                                </div>
+                            ` : `
+                                <p class="text-[9px] text-slate-400 mt-1"><i class="bi bi-lightbulb"></i> Tulis jawaban dengan benar. Huruf kapital dan spasi tidak mempengaruhi penilaian.</p>
+                            `}
+                        </div>
+                    `;
+                }
+
+                const cardHtml = `
+                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 relative" id="question-${q.id}">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs font-black text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg">Soal ${questionNumber}</span>
+                                <span class="text-[9px] font-bold ${getTypeColor(q.tipe)} px-2 py-0.5 rounded-full bg-slate-100">${getTypeLabel(q.tipe)}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span id="status_${q.id}" class="text-[9px] font-bold ${userAnswer ? 'text-emerald-600' : 'text-slate-300'}">
+                                    ${userAnswer ? '✓ Terjawab' : '● Belum'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="text-xs text-slate-700 font-medium leading-relaxed">${q.pertanyaan}</p>
+                        </div>
+
+                        ${optionsHtml}
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function getTypeLabel(tipe) {
+            const types = {
+                'PG': 'Pilihan Ganda',
+                'PGK': 'PG Kompleks',
+                'MENJODOHKAN': 'Menjodohkan',
+                'ISIAN': 'Isian Singkat'
+            };
+            return types[tipe] || tipe;
+        }
+
+        function getTypeColor(tipe) {
+            const colors = {
+                'PG': 'text-teal-700',
+                'PGK': 'text-blue-700',
+                'MENJODOHKAN': 'text-orange-700',
+                'ISIAN': 'text-purple-700'
+            };
+            return colors[tipe] || 'text-slate-700';
+        }
+
+        // ============================================
+        // FUNGSI INTERAKSI SISWA
+        // ============================================
+        function selectOption(qId, option, tipe) {
+            if (isSubmitted) return;
+
+            if (tipe === 'PGK') {
+                if (!userAnswers[qId]) userAnswers[qId] = [];
+                const index = userAnswers[qId].indexOf(option);
+                if (index > -1) {
+                    userAnswers[qId].splice(index, 1);
+                    if (userAnswers[qId].length === 0) delete userAnswers[qId];
+                } else {
+                    userAnswers[qId].push(option);
+                }
+            } else {
+                userAnswers[qId] = option;
+            }
+
+            updateProgress();
+            renderQuestions(quizData.questions);
+            showToast('Jawaban tersimpan!');
+        }
+
+        function selectMatching(qId, pairKey, value) {
+            if (isSubmitted) return;
+
+            if (!userAnswers[qId]) userAnswers[qId] = {};
+            if (value) {
+                userAnswers[qId][pairKey] = value;
+            } else {
+                delete userAnswers[qId][pairKey];
+                if (Object.keys(userAnswers[qId]).length === 0) {
+                    delete userAnswers[qId];
+                }
+            }
+
+            updateProgress();
+            updateQuestionStatus(qId);
+        }
+
+        function selectIsian(qId, value) {
+            if (isSubmitted) return;
+
+            if (value.trim()) {
+                userAnswers[qId] = value.trim();
+            } else {
+                delete userAnswers[qId];
+            }
+
+            updateProgress();
+            updateQuestionStatus(qId);
+        }
+
+        // Fungsi untuk menormalisasi jawaban isian (untuk koreksi)
+        function normalizeAnswer(text) {
+            if (!text) return '';
+            return text
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, ' ')
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+                .replace(/[ ]{2,}/g, ' ');
+        }
+
+        // Fungsi untuk mengecek jawaban isian (tahan typo)
+        function checkIsianAnswer(userAnswer, correctAnswers) {
+            if (!userAnswer || !correctAnswers) return false;
+            
+            const normalizedUser = normalizeAnswer(userAnswer);
+            const correctList = correctAnswers.split('|').map(s => normalizeAnswer(s));
+            
+            if (correctList.includes(normalizedUser)) return true;
+            
+            for (let correct of correctList) {
+                if (Math.abs(normalizedUser.length - correct.length) > 3) continue;
+                
+                let matchCount = 0;
+                const minLen = Math.min(normalizedUser.length, correct.length);
+                for (let i = 0; i < minLen; i++) {
+                    if (normalizedUser[i] === correct[i]) matchCount++;
+                }
+                const similarity = minLen > 0 ? matchCount / Math.max(normalizedUser.length, correct.length) : 0;
+                if (similarity >= 0.8) return true;
+            }
+            
+            return false;
+        }
+
+        function updateQuestionStatus(qId) {
+            const statusEl = document.getElementById(`status_${qId}`);
+            if (statusEl) {
+                const isAnswered = userAnswers[qId] !== undefined && 
+                    (typeof userAnswers[qId] === 'string' ? userAnswers[qId].trim() !== '' : 
+                    Array.isArray(userAnswers[qId]) ? userAnswers[qId].length > 0 : 
+                    Object.keys(userAnswers[qId] || {}).length > 0);
+                
+                if (isAnswered) {
+                    statusEl.textContent = '✓ Terjawab';
+                    statusEl.className = 'text-[9px] font-bold text-emerald-600';
+                } else {
+                    statusEl.textContent = '● Belum';
+                    statusEl.className = 'text-[9px] font-bold text-slate-300';
+                }
+            }
+        }
+
+        function updateProgress() {
+            const total = quizData?.questions?.length || 0;
+            let answered = 0;
+
+            if (quizData && quizData.questions) {
+                quizData.questions.forEach(q => {
+                    const answer = userAnswers[q.id];
+                    if (answer !== undefined && answer !== null && answer !== '') {
+                        if (typeof answer === 'string') {
+                            if (answer.trim()) answered++;
+                        } else if (Array.isArray(answer)) {
+                            if (answer.length > 0) answered++;
+                        } else if (typeof answer === 'object') {
+                            if (Object.keys(answer).length > 0) answered++;
+                        }
+                    }
+                });
+            }
+
+            document.getElementById('progressText').textContent = `${answered} / ${total}`;
+            const remaining = total - answered;
+            document.getElementById('remainingTime').textContent = `${remaining} soal tersisa`;
+        }
+
+        // ============================================
+        // TIMER
+        // ============================================
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    showToast('⏰ Waktu habis! Kuis akan dikumpulkan otomatis.', false);
+                    setTimeout(() => submitQuiz(), 1500);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timerText = document.getElementById('timerText');
+            const timerDisplay = document.getElementById('timerDisplay');
+
+            timerText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (timeRemaining < 60) {
+                timerDisplay.classList.add('timer-warning');
+            } else {
+                timerDisplay.classList.remove('timer-warning');
+            }
+        }
+
+        // ============================================
+        // SUBMIT KUIS
+        // ============================================
+        function submitQuiz() {
+            if (isSubmitted) return;
+
+            const name = document.getElementById('studentName').value.trim();
+            const number = document.getElementById('studentNumber').value.trim();
+
+            if (!name) {
+                showToast('⚠️ Silakan isi Nama Lengkap Anda terlebih dahulu!', false);
+                document.getElementById('studentName').focus();
+                return;
+            }
+
+            if (!number) {
+                showToast('⚠️ Silakan isi Nomor Absen Anda!', false);
+                document.getElementById('studentNumber').focus();
+                return;
+            }
+
+            const historyKey = `quizHistory_${name}_${number}`;
+            const existingHistory = localStorage.getItem(historyKey);
+            if (existingHistory) {
+                showToast('⚠️ Anda sudah pernah mengerjakan kuis ini!', false);
+                return;
+            }
+
+            isSubmitted = true;
+            clearInterval(timerInterval);
+
+            // Keluar dari fullscreen setelah selesai
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitFullscreenElement) {
+                document.webkitExitFullscreen();
+            }
+
+            let correct = 0;
+            const total = quizData.questions.length;
+            const detailJawaban = [];
+
+            quizData.questions.forEach(q => {
+                const userAnswer = userAnswers[q.id];
+                const correctAnswer = q.jawaban;
+                let isBenar = false;
+
+                if (!userAnswer) {
+                    detailJawaban.push({
+                        ...q,
+                        userAnswer: '-',
+                        isBenar: false
+                    });
+                    return;
+                }
+
+                if (q.tipe === 'PG') {
+                    if (userAnswer === correctAnswer) {
+                        correct++;
+                        isBenar = true;
+                    }
+                } else if (q.tipe === 'PGK') {
+                    const userArr = [...userAnswer].sort();
+                    const correctArr = correctAnswer.split(';').map(s => s.trim()).sort();
+                    if (JSON.stringify(userArr) === JSON.stringify(correctArr)) {
+                        correct++;
+                        isBenar = true;
+                    }
+                } else if (q.tipe === 'MENJODOHKAN') {
+                    const correctMap = correctAnswer.split(';').map(s => s.trim());
+                    const userMap = ['A', 'B', 'C'].map(key => userAnswer[key] || '');
+                    if (JSON.stringify(userMap) === JSON.stringify(correctMap)) {
+                        correct++;
+                        isBenar = true;
+                    }
+                } else if (q.tipe === 'ISIAN') {
+                    if (checkIsianAnswer(userAnswer, correctAnswer)) {
+                        correct++;
+                        isBenar = true;
+                    }
+                }
+
+                detailJawaban.push({
+                    ...q,
+                    userAnswer: userAnswer,
+                    isBenar: isBenar,
+                    jawabanBenar: correctAnswer
+                });
+            });
+
+            const wrong = total - correct;
+            const score = Math.round((correct / total) * 100);
+
+            hasilQuiz = {
+                name,
+                number,
+                date: new Date().toISOString(),
+                total,
+                correct,
+                wrong,
+                score,
+                totalPenalty: totalPenaltyMinutes,
+                detailJawaban,
+                answers: userAnswers,
+                cheatDetected: cheatDetected
+            };
+
+            localStorage.setItem(historyKey, JSON.stringify(hasilQuiz));
+            localStorage.setItem('quizHistoryLastKey', historyKey);
+
+            showResultWithCorrection(name, number, total, correct, wrong, score, detailJawaban);
+            showToast(`🎉 Kuis selesai! Nilai Anda: ${score}`);
+        }
+
+        function showResultWithCorrection(name, number, total, correct, wrong, score, detailJawaban) {
+            const modal = document.getElementById('resultModal');
+            document.getElementById('resultName').textContent = name;
+            document.getElementById('resultNumber').textContent = number || '-';
+            document.getElementById('resultTotal').textContent = total;
+            document.getElementById('resultAnswered').textContent = correct;
+            document.getElementById('resultWrong').textContent = wrong;
+            document.getElementById('resultScore').textContent = score;
+
+            const icon = document.getElementById('resultIcon');
+            const title = document.getElementById('resultTitle');
+            const subtitle = document.getElementById('resultSubtitle');
+
+            if (score >= 80) {
+                icon.innerHTML = '<i class="bi bi-trophy-fill text-5xl text-yellow-500"></i>';
+                title.textContent = '🌟 Luar Biasa!';
+                subtitle.textContent = 'Pertahankan prestasi belajarmu!';
+            } else if (score >= 60) {
+                icon.innerHTML = '<i class="bi bi-check-circle-fill text-5xl text-emerald-500"></i>';
+                title.textContent = '👍 Bagus!';
+                subtitle.textContent = 'Terus belajar dan tingkatkan lagi!';
+            } else if (score >= 40) {
+                icon.innerHTML = '<i class="bi bi-arrow-up-circle-fill text-5xl text-orange-500"></i>';
+                title.textContent = '📚 Belajar Lagi!';
+                subtitle.textContent = 'Jangan menyerah, pelajari ulang materinya!';
+            } else {
+                icon.innerHTML = '<i class="bi bi-book-fill text-5xl text-blue-500"></i>';
+                title.textContent = '📖 Perlu Belajar Lebih';
+                subtitle.textContent = 'Coba baca materi dan kerjakan ulang kuis ini!';
+            }
+
+            renderQuestionsWithCorrection(quizData.questions, detailJawaban);
+            modal.classList.remove('hidden');
+        }
+
+        function renderQuestionsWithCorrection(questions, detailJawaban) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            questions.forEach((q, index) => {
+                const questionNumber = index + 1;
+                const detail = detailJawaban[index];
+                let optionsHtml = '';
+                const userAnswer = detail.userAnswer;
+                const correctAnswer = q.jawaban;
+
+                if (q.tipe === 'PG' || q.tipe === 'PGK') {
+                    const options = ['A', 'B', 'C', 'D'];
+                    const isPGK = q.tipe === 'PGK';
+                    const selectedValues = userAnswer !== '-' ? (isPGK ? userAnswer : [userAnswer]) : [];
+
+                    optionsHtml = `
+                        <div class="space-y-2 mt-2">
+                            ${options.map(opt => {
+                                const optText = q[`pilihan${opt}`];
+                                if (!optText) return '';
+                                
+                                let isCorrect = false;
+                                let isSelected = false;
+                                let isWrong = false;
+
+                                if (isPGK) {
+                                    const correctArr = correctAnswer.split(';').map(s => s.trim());
+                                    isCorrect = correctArr.includes(opt);
+                                    isSelected = selectedValues.includes(opt);
+                                    isWrong = isSelected && !isCorrect;
+                                } else {
+                                    isCorrect = opt === correctAnswer;
+                                    isSelected = userAnswer === opt;
+                                    isWrong = isSelected && !isCorrect;
+                                }
+
+                                let classes = 'option-card w-full text-left px-4 py-3 rounded-xl border-2 bg-white touch-target flex items-center gap-3';
+                                if (isCorrect) classes += ' correct';
+                                if (isWrong) classes += ' wrong';
+                                if (isSelected && isCorrect) classes += ' selected';
+                                classes += ' disabled';
+
+                                return `
+                                    <div class="${classes}">
+                                        <span class="w-6 h-6 rounded-full ${isSelected ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center text-xs font-bold flex-shrink-0">${opt}</span>
+                                        <span class="text-xs text-slate-700">${optText}</span>
+                                        ${isCorrect ? '<i class="bi bi-check-circle-fill text-emerald-500 ml-auto"></i>' : ''}
+                                        ${isWrong ? '<i class="bi bi-x-circle-fill text-red-500 ml-auto"></i>' : ''}
+                                    </div>
+                                `;
+                            }).filter(html => html).join('')}
+                        </div>
+                    `;
+                } else if (q.tipe === 'MENJODOHKAN') {
+                    const pairs = ['A', 'B', 'C'];
+                    const selectedMap = userAnswer !== '-' ? userAnswer : {};
+                    const rightOptions = ['A', 'B', 'C', 'D'];
+                    const rightLabels = rightOptions.map(opt => ({
+                        label: opt,
+                        text: q[`pilihan${opt}`] || ''
+                    })).filter(item => item.text);
+
+                    const correctMap = correctAnswer.split(';').map(s => s.trim());
+                    const kiriList = q.kiri || ['', '', ''];
+
+                    optionsHtml = `
+                        <div class="space-y-3 mt-2">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-bold text-teal-700">⬅️ Sisi Kiri</p>
+                                    ${kiriList.map((leftText, idx) => {
+                                        const pairKey = pairs[idx];
+                                        const currentVal = selectedMap[pairKey] || '';
+                                        const isCorrect = currentVal && correctMap[idx] === currentVal;
+                                        const isWrong = currentVal && correctMap[idx] !== currentVal;
+
+                                        return `
+                                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                                <span class="text-xs font-medium text-slate-700">${leftText || `(Kosong ${idx+1})`}</span>
+                                                <span class="text-[9px] ${isCorrect ? 'text-emerald-600' : isWrong ? 'text-red-600' : 'text-slate-400'} ml-1">
+                                                    ${isCorrect ? '✓' : isWrong ? '✗' : '•'}
+                                                </span>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-bold text-orange-600">Sisi Kanan ➡️</p>
+                                    ${kiriList.map((leftText, idx) => {
+                                        const pairKey = pairs[idx];
+                                        const currentVal = selectedMap[pairKey] || '';
+                                        const isCorrect = currentVal && correctMap[idx] === currentVal;
+                                        const isWrong = currentVal && correctMap[idx] !== currentVal;
+
+                                        let borderClass = 'border-slate-200';
+                                        if (currentVal) {
+                                            borderClass = isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-red-500 bg-red-50';
+                                        }
+
+                                        return `
+                                            <div class="bg-white p-1.5 rounded-xl border-2 ${borderClass}">
+                                                <select class="w-full text-xs font-medium bg-transparent outline-none touch-target py-1" disabled>
+                                                    <option value="">-- Pilih --</option>
+                                                    ${rightLabels.map(r => `
+                                                        <option value="${r.label}" ${currentVal === r.label ? 'selected' : ''}>
+                                                            ${r.label}. ${r.text}
+                                                            ${r.label === correctMap[idx] ? ' ✅' : ''}
+                                                        </option>
+                                                    `).join('')}
+                                                </select>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded-lg">
+                                <span class="font-bold">Jawaban benar:</span> ${correctMap.map((val, idx) => `${pairs[idx]} → ${val}`).join(', ')}
+                            </div>
+                        </div>
+                    `;
+                } else if (q.tipe === 'ISIAN') {
+                    const currentValue = userAnswer !== '-' ? userAnswer : '';
+                    const isCorrect = currentValue && checkIsianAnswer(currentValue, correctAnswer);
+                    const isWrong = currentValue && !isCorrect;
+
+                    let inputClass = 'w-full px-4 py-3 text-xs bg-slate-50 border-2 rounded-xl font-medium touch-target';
+                    if (currentValue) {
+                        inputClass += isCorrect ? ' border-emerald-500 bg-emerald-50' : ' border-red-500 bg-red-50';
+                    } else {
+                        inputClass += ' border-slate-200';
+                    }
+
+                    optionsHtml = `
+                        <div class="mt-2">
+                            <input type="text" 
+                                value="${currentValue}" 
+                                class="${inputClass}"
+                                disabled>
+                            <div class="text-[10px] mt-1 ${isCorrect ? 'text-emerald-600' : isWrong ? 'text-red-600' : 'text-slate-500'}">
+                                <span class="font-bold">Jawaban benar:</span> ${correctAnswer}
+                                ${isCorrect ? ' ✅' : isWrong ? ' ❌' : ''}
+                            </div>
+                            ${isWrong ? `
+                                <div class="text-[10px] text-slate-400 mt-1">
+                                    <i class="bi bi-info-circle"></i> Periksa ejaan Anda. Jawaban yang diterima: ${correctAnswer.split('|').join(' atau ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
+                const cardHtml = `
+                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 relative" id="question-${q.id}">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs font-black text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg">Soal ${questionNumber}</span>
+                                <span class="text-[9px] font-bold ${getTypeColor(q.tipe)} px-2 py-0.5 rounded-full bg-slate-100">${getTypeLabel(q.tipe)}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] font-bold ${detail.isBenar ? 'text-emerald-600' : 'text-red-600'}">
+                                    ${detail.isBenar ? '✓ Benar' : '✗ Salah'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="text-xs text-slate-700 font-medium leading-relaxed">${q.pertanyaan}</p>
+                        </div>
+
+                        ${optionsHtml}
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // ============================================
+        // SHOW PDF PREVIEW
+        // ============================================
+        function showPDFPreview() {
+            if (!hasilQuiz) {
+                showToast('Tidak ada hasil untuk ditampilkan.', false);
+                return;
+            }
+
+            const previewContainer = document.getElementById('pdfPreviewContent');
+            previewContainer.innerHTML = generatePDFPreviewHTML();
+            document.getElementById('pdfPreviewModal').classList.remove('hidden');
+        }
+
+        function closePDFPreview() {
+            document.getElementById('pdfPreviewModal').classList.add('hidden');
+        }
+
+        function generatePDFPreviewHTML() {
+            const h = hasilQuiz;
+            let html = `
+                <div class="pdf-page">
+                    <div style="text-align: center; border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 12px;">
+                        <h2 style="font-size: 18px; font-weight: 800; color: #0f766e; margin: 0;">LAPORAN HASIL KUIS</h2>
+                        <p style="font-size: 12px; color: #64748b; margin: 2px 0;">SDN 3 Ngantru</p>
+                        <p style="font-size: 11px; color: #94a3b8; margin: 2px 0;">${new Date(h.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; margin-bottom: 12px;">
+                        <div><span style="color: #64748b;">Nama:</span> <strong>${h.name}</strong></div>
+                        <div><span style="color: #64748b;">No. Absen:</span> <strong>${h.number}</strong></div>
+                        <div><span style="color: #64748b;">Total Soal:</span> <strong>${h.total}</strong></div>
+                        <div><span style="color: #64748b;">Benar/Salah:</span> <strong style="color: #16a34a;">${h.correct}</strong> / <strong style="color: #dc2626;">${h.wrong}</strong></div>
+                        ${h.totalPenalty > 0 ? `
+                            <div style="grid-column: span 2; color: #dc2626; font-size: 10px;">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Penalti: ${h.totalPenalty} menit dipotong karena kecurangan
+                            </div>
+                        ` : ''}
+                        ${h.cheatDetected ? `
+                            <div style="grid-column: span 2; color: #dc2626; font-size: 10px; background: #fee2e2; padding: 4px 8px; border-radius: 4px;">
+                                ⚠️ Kecurangan terdeteksi selama pengerjaan
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="text-align: center; margin: 10px 0;">
+                        <div class="stempel-nilai ${h.score >= 80 ? 'sangat-bagus' : h.score >= 60 ? 'bagus' : h.score >= 40 ? 'cukup' : 'kurang'}">
+                            ${h.score}
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+                            ${h.score >= 80 ? '🌟 Sangat Baik' : h.score >= 60 ? '👍 Baik' : h.score >= 40 ? '📚 Cukup' : '📖 Perlu Belajar Lagi'}
+                        </div>
+                    </div>
+
+                    <hr style="border: 1px dashed #e2e8f0; margin: 12px 0;">
+
+                    <h4 style="font-size: 13px; font-weight: 700; color: #0f766e; margin: 0 0 10px 0;">📝 DETAIL JAWABAN</h4>
+            `;
+
+            h.detailJawaban.forEach((item, index) => {
+                const statusText = item.isBenar ? '✅ Benar' : '❌ Salah';
+                const statusColor = item.isBenar ? '#16a34a' : '#dc2626';
+                
+                let userAns = item.userAnswer;
+                if (typeof userAns === 'object') {
+                    if (Array.isArray(userAns)) {
+                        userAns = userAns.join(', ');
+                    } else {
+                        userAns = Object.values(userAns).join(', ');
+                    }
+                }
+
+                html += `
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 10px; ${item.isBenar ? 'border-left: 4px solid #22c55e;' : 'border-left: 4px solid #ef4444;'}">
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 4px;">
+                            <span>Soal ${index + 1}</span>
+                            <span style="color: ${statusColor};">${statusText}</span>
+                        </div>
+                        <p style="font-size: 10px; margin: 4px 0; color: #1e293b;">${item.pertanyaan}</p>
+                        <div style="font-size: 10px; color: #64748b;">
+                            <div>Jawaban Anda: <strong>${userAns || '(Tidak dijawab)'}</strong></div>
+                            ${!item.isBenar ? `
+                                <div class="jawaban-benar-display">
+                                    ✅ Jawaban Benar: <strong>${item.jawabanBenar}</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    <div style="text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px;">
+                        Dicetak dari Kuis Siswa - SDN 3 Ngantru
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        // ============================================
+        // DOWNLOAD PDF
+        // ============================================
+        function downloadPDF() {
+            if (!hasilQuiz) {
+                showToast('Tidak ada hasil untuk diunduh.', false);
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            let y = margin;
+
+            function addText(text, size = 11, style = 'normal', x = margin) {
+                doc.setFontSize(size);
+                doc.setFont('helvetica', style);
+                const lines = doc.splitTextToSize(text, pageWidth - margin * 2);
+                const lineHeight = size * 0.4;
+                
+                lines.forEach(line => {
+                    if (y + lineHeight > pageHeight - margin) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                    doc.text(line, x, y);
+                    y += lineHeight + 1;
+                });
+                y += 2;
+            }
+
+            // Header
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 118, 110);
+            doc.text('LAPORAN HASIL KUIS', pageWidth / 2, y, { align: 'center' });
+            y += 8;
+            
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text('SDN 3 Ngantru', pageWidth / 2, y, { align: 'center' });
+            y += 6;
+            doc.text(`Tanggal: ${new Date(hasilQuiz.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}`, pageWidth / 2, y, { align: 'center' });
+            y += 8;
+
+            doc.setDrawColor(200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 6;
+
+            // Data Siswa
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 41, 59);
+            doc.text('DATA SISWA', margin, y);
+            y += 6;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            addText(`Nama: ${hasilQuiz.name}`, 10);
+            addText(`Nomor Absen: ${hasilQuiz.number}`, 10);
+            
+            y += 2;
+            addText(`Total Soal: ${hasilQuiz.total}`, 10);
+            addText(`Benar: ${hasilQuiz.correct}  |  Salah: ${hasilQuiz.wrong}`, 10);
+            
+            if (hasilQuiz.totalPenalty > 0) {
+                doc.setTextColor(220, 38, 38);
+                addText(`⚠️ Penalti: ${hasilQuiz.totalPenalty} menit dipotong karena kecurangan`, 10);
+                doc.setTextColor(100, 116, 139);
+            }
+            if (hasilQuiz.cheatDetected) {
+                doc.setTextColor(220, 38, 38);
+                addText(`⚠️ Kecurangan terdeteksi selama pengerjaan`, 10);
+                doc.setTextColor(100, 116, 139);
+            }
+            
+            y += 4;
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 118, 110);
+            doc.text(`NILAI: ${hasilQuiz.score}`, pageWidth / 2, y, { align: 'center' });
+            y += 6;
+            
+            const scoreLabel = hasilQuiz.score >= 80 ? '🌟 Sangat Baik' : 
+                              hasilQuiz.score >= 60 ? '👍 Baik' : 
+                              hasilQuiz.score >= 40 ? '📚 Cukup' : '📖 Perlu Belajar Lagi';
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text(scoreLabel, pageWidth / 2, y, { align: 'center' });
+            y += 8;
+
+            doc.setDrawColor(200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 8;
+
+            // Detail Jawaban
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 118, 110);
+            doc.text('📝 DETAIL JAWABAN', margin, y);
+            y += 6;
+
+            hasilQuiz.detailJawaban.forEach((item, index) => {
+                const soalNum = index + 1;
+                const status = item.isBenar ? '✅ Benar' : '❌ Salah';
+                
+                if (y > pageHeight - 50) {
+                    doc.addPage();
+                    y = margin;
+                }
+
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 41, 59);
+                doc.text(`Soal ${soalNum}`, margin, y);
+                y += 5;
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                const questionLines = doc.splitTextToSize(item.pertanyaan, pageWidth - margin * 2 - 10);
+                questionLines.forEach(line => {
+                    doc.text(line, margin + 3, y);
+                    y += 4.5;
+                });
+                
+                let userAns = item.userAnswer;
+                if (typeof userAns === 'object') {
+                    if (Array.isArray(userAns)) {
+                        userAns = userAns.join(', ');
+                    } else {
+                        userAns = Object.values(userAns).join(', ');
+                    }
+                }
+                
+                doc.setTextColor(71, 85, 105);
+                doc.text(`Jawaban Anda: ${userAns || '(Tidak dijawab)'}`, margin + 3, y);
+                y += 5;
+                
+                if (!item.isBenar) {
+                    doc.setTextColor(34, 197, 94);
+                    doc.text(`✅ Jawaban Benar: ${item.jawabanBenar}`, margin + 3, y);
+                    y += 5;
+                }
+                
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Status: ${status}`, margin + 3, y);
+                y += 6;
+                
+                if (index < hasilQuiz.detailJawaban.length - 1) {
+                    doc.setDrawColor(230);
+                    doc.line(margin + 3, y, pageWidth - margin - 3, y);
+                    y += 4;
+                }
+            });
+
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(148, 163, 184);
+                doc.text(
+                    `Halaman ${i} dari ${totalPages} - SDN 3 Ngantru`,
+                    pageWidth / 2,
+                    pageHeight - 10,
+                    { align: 'center' }
+                );
+            }
+
+            doc.save(`Hasil_Kuis_${hasilQuiz.name}_${hasilQuiz.number}.pdf`);
+            closePDFPreview();
+            showToast('📄 PDF berhasil diunduh!');
+        }
+
+        // ============================================
+        // CLOSE RESULT
+        // ============================================
+        function closeResult() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        // ============================================
+        // TOAST
+        // ============================================
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('customToast');
+            const toastText = document.getElementById('toast_text');
+            const toastIcon = document.getElementById('toast_icon');
+
+            toastText.textContent = message;
+            toastIcon.className = isSuccess ? 'bi bi-check-circle-fill text-emerald-400' : 'bi bi-exclamation-circle-fill text-orange-500';
+
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('opacity-100');
+            }, 3000);
+        }
+
+        // ============================================
+        // HANDLE BEFORE UNLOAD
+        // ============================================
+        window.addEventListener('beforeunload', function(e) {
+            if (!isSubmitted && quizData && Object.keys(userAnswers).length > 0) {
+                e.preventDefault();
+                e.returnValue = 'Anda belum menyelesaikan kuis. Yakin ingin keluar?';
+                return e.returnValue;
+            }
+        });
+    </script>
+</body>
+</html>
