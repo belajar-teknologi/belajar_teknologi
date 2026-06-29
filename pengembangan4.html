@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Harian Guru</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (Excel Export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF & jsPDF-AutoTable (PDF Export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- Header / Navbar -->
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-indigo-600 p-2 rounded-lg shadow-inner">
+                    <i class="fa-solid fa-book-open text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Agenda Harian Guru</h1>
+                    <p class="text-xs text-indigo-200">Pencatatan & Pelaporan Kegiatan Belajar Mengajar</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleConfigModal()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition duration-150">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Pengaturan Google Sheet</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Grid Dashboard Utama -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Kolom Kiri: Form Input Agenda -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-8">
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+                        <span>Tambah Agenda Baru</span>
+                    </h2>
+                    
+                    <form id="agendaForm" onsubmit="saveAgenda(event)" class="space-y-4">
+                        <input type="hidden" id="agendaId">
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Jam Mulai</label>
+                                <input type="time" id="jamMulai" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Jam Selesai</label>
+                                <input type="time" id="jamSelesai" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Mata Pelajaran</label>
+                            <input type="text" id="mapel" placeholder="Contoh: Matematika, Fisika" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Kelas</label>
+                            <input type="text" id="kelas" placeholder="Contoh: XI-MIPA 1" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Materi Pokok / Kegiatan</label>
+                            <textarea id="materi" rows="3" placeholder="Tuliskan pokok materi yang diajarkan..." required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Catatan / Hambatan / Evaluasi</label>
+                            <textarea id="catatan" rows="3" placeholder="Siswa sangat antusias, 2 anak izin..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"></textarea>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <button type="submit" id="btnSubmit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition duration-150 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Simpan Agenda</span>
+                            </button>
+                            <button type="button" id="btnReset" onclick="resetForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-lg transition duration-150 flex justify-center items-center" title="Reset Form">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Tabel List Agenda & Aksi Ekspor -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Status Google Sheets Sync Card -->
+                <div id="syncStatusCard" class="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="p-2 bg-amber-100 text-amber-700 rounded-lg text-lg"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <div>
+                            <h3 class="font-bold text-sm">Google Sheets Belum Terhubung</h3>
+                            <p class="text-xs text-amber-700">Agenda baru saat ini hanya disimpan lokal di browser Anda.</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleConfigModal()" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-medium transition duration-150">
+                        Hubungkan Sekarang
+                    </button>
+                </div>
+
+                <!-- Kontrol & Ekspor -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Daftar Agenda Mengajar</h2>
+                            <p class="text-xs text-slate-500" id="agendaCounter">Menampilkan 0 agenda</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <button onclick="exportToExcel()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition duration-150 shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Ekspor Excel</span>
+                            </button>
+                            <button onclick="exportToPDF()" class="flex-1 sm:flex-none bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition duration-150 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i>
+                                <span>Ekspor PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="searchTerm" oninput="renderAgendas()" placeholder="Cari mapel, kelas, atau materi..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="date" id="filterDate" onchange="renderAgendas()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150">
+                            <button onclick="clearFilterDate()" id="btnClearFilter" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-sm transition duration-150" title="Bersihkan Filter Tanggal">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Notification Alert UI -->
+                    <div id="toast" class="hidden fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+                        <span id="toastIcon" class="text-emerald-400"><i class="fa-solid fa-circle-check"></i></span>
+                        <span id="toastMessage" class="text-sm font-medium">Agenda berhasil disimpan!</span>
+                    </div>
+
+                    <!-- Table Agenda -->
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Waktu</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Mapel & Kelas</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Materi Pokok</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Catatan</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agendaTableBody" class="bg-white divide-y divide-slate-100">
+                                <!-- Data ditarik oleh Javascript -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- Empty State -->
+                        <div id="emptyState" class="hidden py-12 text-center">
+                            <div class="text-slate-300 text-5xl mb-3"><i class="fa-regular fa-folder-open"></i></div>
+                            <h3 class="text-slate-600 font-semibold text-base">Belum ada agenda</h3>
+                            <p class="text-slate-400 text-xs px-4">Mulailah dengan mengisi form di sebelah kiri untuk menambah agenda mengajar Anda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Pengaturan Google Spreadsheet -->
+    <div id="configModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="bg-indigo-600 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-google-drive text-xl"></i>
+                    <h3 class="font-bold text-base">Integrasi Google Spreadsheet</h3>
+                </div>
+                <button onclick="toggleConfigModal()" class="text-indigo-200 hover:text-white transition duration-150">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <p class="text-sm text-slate-600">
+                    Aplikasi ini dapat mengirimkan data agenda baru secara real-time ke Google Spreadsheet Anda menggunakan fitur <strong>Web App Google Apps Script</strong>.
+                </p>
+
+                <!-- Langkah Panduan -->
+                <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-100 text-xs space-y-2 text-indigo-950">
+                    <h4 class="font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-info"></i> Panduan Pengaturan:
+                    </h4>
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Buat sebuah file <strong>Google Spreadsheet</strong> baru.</li>
+                        <li>Buka menu <strong>Ekstensi</strong> &rarr; <strong>Apps Script</strong>.</li>
+                        <li>Hapus seluruh kode bawaan, lalu salin-tempel kode Apps Script berikut ini:
+                            <pre class="bg-slate-900 text-slate-200 p-2 rounded mt-1.5 font-mono overflow-x-auto text-[10px] select-all">
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // Jika sheet masih kosong, tambahkan baris header
+    if (sheet.getLastRow() == 0) {
+      sheet.appendRow(["ID", "Tanggal", "Jam Mulai", "Jam Selesai", "Mata Pelajaran", "Kelas", "Materi", "Catatan"]);
+    }
+    
+    sheet.appendRow([
+      data.id,
+      data.tanggal,
+      data.jamMulai,
+      data.jamSelesai,
+      data.mapel,
+      data.kelas,
+      data.materi,
+      data.catatan
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({"result": "success"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({"result": "error", "message": err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                        </li>
+                        <li>Klik ikon disket untuk menyimpan proyek script Anda.</li>
+                        <li>Klik tombol <strong>Terapkan</strong> (Deploy) &rarr; <strong>Penerapan Baru</strong>.</li>
+                        <li>Pilih Jenis: <strong>Aplikasi Web</strong> (Web App).</li>
+                        <li>Setel opsi <strong>"Yang memiliki akses"</strong> menjadi <strong>"Siapa saja"</strong> (Anyone), lalu klik Terapkan.</li>
+                        <li>Salin <strong>URL Aplikasi Web</strong> yang dihasilkan dan tempelkan ke form input di bawah ini.</li>
+                    </ol>
+                </div>
+
+                <!-- Input Spreadsheet API Web App URL -->
+                <div class="space-y-2 pt-2">
+                    <label class="block text-sm font-semibold text-slate-700">URL Web App Google Apps Script</label>
+                    <input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150">
+                    <p class="text-[11px] text-slate-400">Pastikan URL diawali dengan https://script.google.com/</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-slate-50 px-6 py-4 flex justify-between items-center border-t">
+                <button onclick="testConnection()" id="btnTestConn" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1.5 transition duration-150">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Kirim Test Data</span>
+                </button>
+                <div class="flex space-x-2">
+                    <button onclick="toggleConfigModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition duration-150">
+                        Batal
+                    </button>
+                    <button onclick="saveConfig()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-150">
+                        Simpan Integrasi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-sm p-6 space-y-4">
+            <div class="text-rose-600 text-4xl text-center"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="text-center">
+                <h3 class="font-bold text-slate-900 text-lg">Hapus Agenda Ini?</h3>
+                <p class="text-slate-500 text-xs mt-1">Tindakan ini tidak dapat dibatalkan di data lokal Anda.</p>
+            </div>
+            <div class="flex space-x-3 pt-2">
+                <button onclick="toggleDeleteModal(null)" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-sm font-medium transition duration-150">Batal</button>
+                <button id="btnConfirmDelete" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-sm font-medium transition duration-150">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Global Aplikasi
+        let agendas = [];
+        let googleSheetUrl = '';
+        let itemToDeleteId = null;
+
+        // Inisialisasi saat window dimuat
+        window.onload = function() {
+            // Set input tanggal bawaan ke hari ini
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggal').value = today;
+
+            // Load data dari localStorage
+            const localAgendas = localStorage.getItem('agendas');
+            if (localAgendas) {
+                agendas = JSON.parse(localAgendas);
+            }
+
+            const savedUrl = localStorage.getItem('googleSheetUrl');
+            if (savedUrl) {
+                googleSheetUrl = savedUrl;
+                document.getElementById('sheetUrl').value = savedUrl;
+            }
+
+            updateSyncStatusUI();
+            renderAgendas();
+        };
+
+        // Mengatur UI indikasi koneksi Google Sheets
+        function updateSyncStatusUI() {
+            const card = document.getElementById('syncStatusCard');
+            if (googleSheetUrl && googleSheetUrl.trim().startsWith('https://script.google.com')) {
+                card.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+                card.classList.remove('bg-amber-50', 'border-amber-200', 'text-amber-900');
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="p-2 bg-emerald-100 text-emerald-700 rounded-lg text-lg"><i class="fa-solid fa-circle-check"></i></span>
+                        <div>
+                            <h3 class="font-bold text-sm">Google Sheets Terhubung</h3>
+                            <p class="text-xs text-emerald-700">Agenda baru Anda akan otomatis terkirim ke spreadsheet.</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleConfigModal()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md font-medium transition duration-150">
+                        Ubah Konfigurasi
+                    </button>
+                `;
+            } else {
+                card.classList.remove('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+                card.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-900');
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="p-2 bg-amber-100 text-amber-700 rounded-lg text-lg"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <div>
+                            <h3 class="font-bold text-sm">Google Sheets Belum Terhubung</h3>
+                            <p class="text-xs text-amber-700">Agenda baru saat ini hanya disimpan lokal di browser Anda.</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleConfigModal()" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-medium transition duration-150">
+                        Hubungkan Sekarang
+                    </button>
+                `;
+            }
+        }
+
+        // Simpan agenda baru atau edit yang sudah ada
+        function saveAgenda(event) {
+            event.preventDefault();
+
+            const agendaId = document.getElementById('agendaId').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const jamMulai = document.getElementById('jamMulai').value;
+            const jamSelesai = document.getElementById('jamSelesai').value;
+            const mapel = document.getElementById('mapel').value;
+            const kelas = document.getElementById('kelas').value;
+            const materi = document.getElementById('materi').value;
+            const catatan = document.getElementById('catatan').value;
+
+            const agendaData = {
+                id: agendaId ? parseInt(agendaId) : Date.now(),
+                tanggal,
+                jamMulai,
+                jamSelesai,
+                mapel,
+                kelas,
+                materi,
+                catatan
+            };
+
+            if (agendaId) {
+                // Proses Edit data yang sudah ada
+                const index = agendas.findIndex(a => a.id === parseInt(agendaId));
+                if (index !== -1) {
+                    agendas[index] = agendaData;
+                    showToast('Agenda berhasil diperbarui!', 'emerald');
+                }
+            } else {
+                // Proses Tambah data baru
+                agendas.unshift(agendaData);
+                showToast('Agenda baru berhasil disimpan!', 'emerald');
+                
+                // Kirim ke Google Spreadsheet jika URL terkonfigurasi
+                if (googleSheetUrl && googleSheetUrl.trim().startsWith('https://script.google.com')) {
+                    sendToGoogleSheets(agendaData);
+                }
+            }
+
+            // Simpan ke localStorage
+            localStorage.setItem('agendas', JSON.stringify(agendas));
+            
+            resetForm();
+            renderAgendas();
+        }
+
+        // Kirim data agenda baru ke Google Sheets menggunakan API fetch
+        function sendToGoogleSheets(data) {
+            // Karena Apps Script CORS kadang memiliki keterbatasan pengiriman langsung,
+            // kita menggunakan no-cors agar pengiriman berjalan lancar tanpa terhalang browser
+            fetch(googleSheetUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                showToast('Data berhasil disinkronkan ke Google Sheet!', 'indigo');
+            })
+            .catch(error => {
+                console.error('Error saat menyinkronkan ke Google Sheets:', error);
+                showToast('Gagal menyinkronkan data ke Google Sheet.', 'rose');
+            });
+        }
+
+        // Menampilkan baris data pada tabel utama
+        function renderAgendas() {
+            const tbody = document.getElementById('agendaTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const counter = document.getElementById('agendaCounter');
+            const searchTerm = document.getElementById('searchTerm').value.toLowerCase();
+            const filterDate = document.getElementById('filterDate').value;
+            
+            // Atur visibilitas tombol reset filter tanggal
+            const btnClearFilter = document.getElementById('btnClearFilter');
+            if (filterDate) {
+                btnClearFilter.classList.remove('hidden');
+            } else {
+                btnClearFilter.classList.add('hidden');
+            }
+
+            tbody.innerHTML = '';
+
+            // Lakukan penyaringan data (filter & search)
+            const filteredAgendas = agendas.filter(agenda => {
+                const matchSearch = agenda.mapel.toLowerCase().includes(searchTerm) || 
+                                    agenda.kelas.toLowerCase().includes(searchTerm) || 
+                                    agenda.materi.toLowerCase().includes(searchTerm) ||
+                                    (agenda.catatan && agenda.catatan.toLowerCase().includes(searchTerm));
+                
+                const matchDate = filterDate ? agenda.tanggal === filterDate : true;
+
+                return matchSearch && matchDate;
+            });
+
+            counter.innerText = `Menampilkan ${filteredAgendas.length} dari ${agendas.length} agenda`;
+
+            if (filteredAgendas.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Membangun baris tabel HTML
+            filteredAgendas.forEach(agenda => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition duration-150";
+                
+                // Format Tanggal Indonesia
+                const formattedDate = formatIndoDate(agenda.tanggal);
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="font-semibold text-slate-900">${formattedDate}</div>
+                        <div class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i>${agenda.jamMulai} - ${agenda.jamSelesai}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="font-semibold text-slate-900">${agenda.mapel}</div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">${agenda.kelas}</span>
+                    </td>
+                    <td class="px-4 py-3 max-w-xs break-words">
+                        <div class="text-slate-700">${agenda.materi}</div>
+                    </td>
+                    <td class="px-4 py-3 max-w-xs break-words text-xs text-slate-500 italic">
+                        ${agenda.catatan ? agenda.catatan : '-'}
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center text-xs font-medium">
+                        <div class="flex justify-center space-x-1.5">
+                            <button onclick="editAgenda(${agenda.id})" class="p-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded border border-amber-200 transition" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="toggleDeleteModal(${agenda.id})" class="p-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded border border-rose-200 transition" title="Hapus">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Mengisi formulir dari data terpilih untuk di-edit
+        function editAgenda(id) {
+            const agenda = agendas.find(a => a.id === id);
+            if (agenda) {
+                document.getElementById('agendaId').value = agenda.id;
+                document.getElementById('tanggal').value = agenda.tanggal;
+                document.getElementById('jamMulai').value = agenda.jamMulai;
+                document.getElementById('jamSelesai').value = agenda.jamSelesai;
+                document.getElementById('mapel').value = agenda.mapel;
+                document.getElementById('kelas').value = agenda.kelas;
+                document.getElementById('materi').value = agenda.materi;
+                document.getElementById('catatan').value = agenda.catatan || '';
+
+                // Scroll halus ke form input di device mobile/tablet
+                document.getElementById('agendaForm').scrollIntoView({ behavior: 'smooth' });
+
+                // Ganti UI Button submit
+                const btnSubmit = document.getElementById('btnSubmit');
+                btnSubmit.className = "flex-1 bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition duration-150 flex justify-center items-center gap-2";
+                btnSubmit.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span>Perbarui Agenda</span>`;
+            }
+        }
+
+        // Hapus agenda terpilih
+        function deleteAgenda() {
+            if (itemToDeleteId !== null) {
+                agendas = agendas.filter(a => a.id !== itemToDeleteId);
+                localStorage.setItem('agendas', JSON.stringify(agendas));
+                renderAgendas();
+                showToast('Agenda berhasil dihapus!', 'rose');
+                toggleDeleteModal(null);
+            }
+        }
+
+        // Reset form input ke kondisi awal
+        function resetForm() {
+            document.getElementById('agendaForm').reset();
+            document.getElementById('agendaId').value = '';
+            
+            // Set tanggal kembali ke hari ini
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggal').value = today;
+
+            // Kembalikan UI Button submit
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.className = "flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow transition duration-150 flex justify-center items-center gap-2";
+            btnSubmit.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Simpan Agenda</span>`;
+        }
+
+        // Bersihkan penyaringan berdasarkan tanggal
+        function clearFilterDate() {
+            document.getElementById('filterDate').value = '';
+            renderAgendas();
+        }
+
+        // Helper: Format tanggal ISO "YYYY-MM-DD" ke "Senin, 17 Agustus 2026"
+        function formatIndoDate(dateString) {
+            if (!dateString) return '';
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const date = new Date(dateString);
+            if (isNaN(date)) return dateString;
+
+            const dayName = days[date.getDay()];
+            const day = date.getDate();
+            const monthName = months[date.getMonth()];
+            const year = date.getFullYear();
+
+            return `${dayName}, ${day} ${monthName} ${year}`;
+        }
+
+        // Modal Handlers
+        function toggleConfigModal() {
+            const modal = document.getElementById('configModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function toggleDeleteModal(id) {
+            const modal = document.getElementById('deleteModal');
+            if (id !== null) {
+                itemToDeleteId = id;
+                modal.classList.remove('hidden');
+                document.getElementById('btnConfirmDelete').onclick = deleteAgenda;
+            } else {
+                itemToDeleteId = null;
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Simpan Konfigurasi Integrasi Google Sheet
+        function saveConfig() {
+            const urlInput = document.getElementById('sheetUrl').value;
+            googleSheetUrl = urlInput;
+            localStorage.setItem('googleSheetUrl', urlInput);
+            updateSyncStatusUI();
+            toggleConfigModal();
+            showToast('Konfigurasi berhasil disimpan!', 'indigo');
+        }
+
+        // Kirim dummy/test data ke Google Sheets Web App
+        function testConnection() {
+            const urlInput = document.getElementById('sheetUrl').value;
+            if (!urlInput || !urlInput.startsWith('https://script.google.com')) {
+                alert('Tolong masukkan URL Google Apps Script yang valid terlebih dahulu!');
+                return;
+            }
+
+            const btnTest = document.getElementById('btnTestConn');
+            btnTest.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Memproses...`;
+            btnTest.disabled = true;
+
+            const dummyData = {
+                id: 999,
+                tanggal: new Date().toISOString().split('T')[0],
+                jamMulai: "00:00",
+                jamSelesai: "00:00",
+                mapel: "TEST KONEKSI",
+                kelas: "ADMIN",
+                materi: "Uji coba pengiriman data dari Agenda Harian Guru",
+                catatan: "Uji coba berhasil"
+            };
+
+            fetch(urlInput, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dummyData)
+            })
+            .then(() => {
+                alert('Data testing terkirim! Silakan periksa Google Spreadsheet Anda, jika baris data baru muncul maka integrasi telah sukses.');
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Gagal mengirim data uji coba. Pastikan CORS/Penerapan Web App sudah diatur ke "Siapa saja"');
+            })
+            .finally(() => {
+                btnTest.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Kirim Test Data</span>`;
+                btnTest.disabled = false;
+            });
+        }
+
+        // Custom Notification Toast
+        function showToast(message, type = 'emerald') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = message;
+            
+            // Menyesuaikan warna berdasarkan parameter tipe
+            if (type === 'rose') {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-xmark"></i>`;
+                toastIcon.className = 'text-rose-400';
+            } else if (type === 'indigo') {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-nodes"></i>`;
+                toastIcon.className = 'text-indigo-400';
+            } else {
+                toastIcon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+                toastIcon.className = 'text-emerald-400';
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, 3000);
+        }
+
+        // EXPORT EXCEL: Menggunakan SheetJS Library (XLSX)
+        function exportToExcel() {
+            if (agendas.length === 0) {
+                showToast('Tidak ada data agenda untuk diekspor!', 'rose');
+                return;
+            }
+
+            // Memetakan struktur array objek agar rapi saat dibaca di Excel
+            const formatExcelData = agendas.map((item, index) => ({
+                "No": index + 1,
+                "Tanggal": formatIndoDate(item.tanggal),
+                "Jam Mulai": item.jamMulai,
+                "Jam Selesai": item.jamSelesai,
+                "Mata Pelajaran": item.mapel,
+                "Kelas": item.kelas,
+                "Materi Pokok / Kegiatan": item.materi,
+                "Catatan / Evaluasi": item.catatan || '-'
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(formatExcelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Agenda Harian");
+
+            // Mengatur lebar kolom otomatis agar rapi saat dibuka
+            const max_len = formatExcelData.reduce((prev, next) => {
+                Object.keys(next).forEach(key => {
+                    const cellLength = next[key] ? next[key].toString().length : 0;
+                    prev[key] = Math.max(prev[key] || 0, cellLength);
+                });
+                return prev;
+            }, {});
+            
+            worksheet['!cols'] = Object.keys(max_len).map(key => ({
+                wch: Math.max(max_len[key] + 3, 10)
+            }));
+
+            // Unduh file excel
+            XLSX.writeFile(workbook, "Agenda_Harian_Guru.xlsx");
+            showToast('File Excel sukses diunduh!', 'emerald');
+        }
+
+        // EXPORT PDF: Menggunakan jsPDF & jsPDF-AutoTable
+        function exportToPDF() {
+            if (agendas.length === 0) {
+                showToast('Tidak ada data agenda untuk diekspor!', 'rose');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            // Judul Dokumen PDF
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('AGENDA HARIAN MENGAJAR GURU', 14, 18);
+            
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Dicetak pada: ${formatIndoDate(new Date().toISOString().split('T')[0])}`, 14, 24);
+
+            // Menyiapkan struktur data tabel
+            const bodyData = agendas.map((item, index) => [
+                index + 1,
+                `${formatIndoDate(item.tanggal)}\n(${item.jamMulai} - ${item.jamSelesai})`,
+                item.mapel,
+                item.kelas,
+                item.materi,
+                item.catatan || '-'
+            ]);
+
+            // Pembuatan tabel otomatis
+            doc.autoTable({
+                startY: 28,
+                head: [['No', 'Hari/Tanggal & Waktu', 'Mata Pelajaran', 'Kelas', 'Materi Kegiatan / Pokok', 'Catatan / Evaluasi']],
+                body: bodyData,
+                theme: 'striped',
+                headStyles: { 
+                    fillColor: [79, 70, 229], // Warna Indigo
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold' 
+                },
+                columnStyles: {
+                    0: { cellWidth: 10, halign: 'center' },
+                    1: { cellWidth: 45 },
+                    2: { cellWidth: 40 },
+                    3: { cellWidth: 25 },
+                    4: { cellWidth: 80 },
+                    5: { cellWidth: 65 }
+                },
+                styles: { 
+                    overflow: 'linebreak', 
+                    fontSize: 9,
+                    cellPadding: 3
+                },
+                margin: { top: 30, right: 14, bottom: 15, left: 14 }
+            });
+
+            // Unduh file PDF
+            doc.save("Agenda_Harian_Guru.pdf");
+            showToast('File PDF sukses diunduh!', 'emerald');
+        }
+    </script>
+</body>
+</html>
